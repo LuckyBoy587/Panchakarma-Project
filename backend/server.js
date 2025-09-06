@@ -1,14 +1,14 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const dotenv = require('dotenv');
-const mysql = require('mysql2/promise');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');
-const multer = require('multer');
-const nodemailer = require('nodemailer');
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const dotenv = require("dotenv");
+const mysql = require("mysql2/promise");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { v4: uuidv4 } = require("uuid");
+const multer = require("multer");
+const nodemailer = require("nodemailer");
 
 // Load environment variables
 dotenv.config();
@@ -19,14 +19,14 @@ const PORT = process.env.PORT || 5000;
 
 // Database connection
 const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'panchakarma_db',
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_NAME || "panchakarma_db",
   port: process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
 };
 
 let pool;
@@ -35,9 +35,9 @@ let pool;
 async function initializeDatabase() {
   try {
     pool = mysql.createPool(dbConfig);
-    console.log('Database connected successfully');
+    console.log("Database connected successfully");
   } catch (error) {
-    console.error('Database connection failed:', error);
+    console.error("Database connection failed:", error);
     process.exit(1);
   }
 }
@@ -45,7 +45,7 @@ async function initializeDatabase() {
 // Middleware
 app.use(helmet());
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
@@ -58,33 +58,37 @@ app.use(limiter);
 // File upload configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
+    cb(null, Date.now() + "-" + file.originalname);
   },
 });
 const upload = multer({ storage });
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
 
-  if (!token) return res.status(401).json({ error: 'Access token required' });
+  if (!token) return res.status(401).json({ error: "Access token required" });
 
-  jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
-    if (err) return res.status(403).json({ error: 'Invalid token' });
-    req.user = user;
-    next();
-  });
+  jwt.verify(
+    token,
+    process.env.JWT_SECRET || "your-secret-key",
+    (err, user) => {
+      if (err) return res.status(403).json({ error: "Invalid token" });
+      req.user = user;
+      next();
+    }
+  );
 };
 
 // Role-based authorization middleware
 const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Insufficient permissions' });
+      return res.status(403).json({ error: "Insufficient permissions" });
     }
     next();
   };
@@ -93,25 +97,25 @@ const authorizeRoles = (...roles) => {
 // Routes
 
 // User Authentication Routes
-app.post('/api/auth/register', async (req, res) => {
+app.post("/api/auth/register", async (req, res) => {
   try {
     const { email, phone, password, firstName, lastName, userType } = req.body;
     console.log("Registering user:", email, phone, userType);
-    
+
     // Validate user type
-    const validUserTypes = ['patient', 'practitioner', 'admin', 'staff'];
+    const validUserTypes = ["patient", "practitioner", "admin", "staff"];
     if (!validUserTypes.includes(userType)) {
-      return res.status(400).json({ error: 'Invalid user type' });
+      return res.status(400).json({ error: "Invalid user type" });
     }
-    
+
     // Check if user already exists
     const [existingUser] = await pool.execute(
-      'SELECT * FROM users WHERE email = ? OR phone = ?',
+      "SELECT * FROM users WHERE email = ? OR phone = ?",
       [email, phone]
     );
 
     if (existingUser.length > 0) {
-      return res.status(400).json({ error: 'User already exists' });
+      return res.status(400).json({ error: "User already exists" });
     }
 
     // Hash password
@@ -121,38 +125,40 @@ app.post('/api/auth/register', async (req, res) => {
     // Create user
     const userId = uuidv4();
     const [newUser] = await pool.execute(
-      'INSERT INTO users (user_id, email, phone, password_hash, user_type, first_name, last_name) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      "INSERT INTO users (user_id, email, phone, password_hash, user_type, first_name, last_name) VALUES (?, ?, ?, ?, ?, ?, ?)",
       [userId, email, phone, hashedPassword, userType, firstName, lastName]
     );
 
     res.status(201).json({
-      message: 'User registered successfully',
+      message: "User registered successfully",
       user: {
         userId: userId,
         email: email,
-        userType: userType
-      }
+        userType: userType,
+      },
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Registration error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     // Find user
-    const [user] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
+    const [user] = await pool.execute("SELECT * FROM users WHERE email = ?", [
+      email,
+    ]);
     if (user.length === 0) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
     // Check password
     const validPassword = await bcrypt.compare(password, user[0].password_hash);
     if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
     // Generate JWT token
@@ -160,46 +166,51 @@ app.post('/api/auth/login', async (req, res) => {
       {
         userId: user[0].user_id,
         email: user[0].email,
-        role: user[0].user_type
+        role: user[0].user_type,
       },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '24h' }
+      process.env.JWT_SECRET || "your-secret-key",
+      { expiresIn: "24h" }
     );
 
     res.json({
-      message: 'Login successful',
+      message: "Login successful",
       token,
       user: {
         userId: user[0].user_id,
         email: user[0].email,
         firstName: user[0].first_name,
         lastName: user[0].last_name,
-        userType: user[0].user_type
-      }
+        userType: user[0].user_type,
+      },
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
 // Patient Management Routes
-app.get('/api/patients', authenticateToken, authorizeRoles('admin', 'practitioner'), async (req, res) => {
-  try {
-    const patients = await pool.query(`
+app.get(
+  "/api/patients",
+  authenticateToken,
+  authorizeRoles("admin", "practitioner"),
+  async (req, res) => {
+    try {
+      const patients = await pool.query(`
       SELECT p.*, u.first_name, u.last_name, u.email, u.phone
       FROM patients p
       JOIN users u ON p.user_id = u.user_id
       ORDER BY p.created_at DESC
     `);
-    res.json(patients.rows);
-  } catch (error) {
-    console.error('Get patients error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+      res.json(patients.rows);
+    } catch (error) {
+      console.error("Get patients error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
-});
+);
 
-app.post('/api/patients', authenticateToken, async (req, res) => {
+app.post("/api/patients", authenticateToken, async (req, res) => {
   try {
     const {
       dateOfBirth,
@@ -222,7 +233,7 @@ app.post('/api/patients', authenticateToken, async (req, res) => {
       exerciseRoutine,
       prakritiAssessment,
       vikritiAssessment,
-      doshaDominance
+      doshaDominance,
     } = req.body;
 
     const patientId = uuidv4();
@@ -236,26 +247,44 @@ app.post('/api/patients', authenticateToken, async (req, res) => {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
       RETURNING *`,
       [
-        patientId, req.user.userId, dateOfBirth, gender, bloodGroup, height, weight,
-        occupation, maritalStatus, emergencyContactName, emergencyContactPhone,
-        emergencyContactRelationship, medicalConditions, allergies, currentMedications,
-        pastSurgeries, familyMedicalHistory, lifestyleHabits, dietaryPreferences,
-        exerciseRoutine, JSON.stringify(prakritiAssessment), JSON.stringify(vikritiAssessment), doshaDominance
+        patientId,
+        req.user.userId,
+        dateOfBirth,
+        gender,
+        bloodGroup,
+        height,
+        weight,
+        occupation,
+        maritalStatus,
+        emergencyContactName,
+        emergencyContactPhone,
+        emergencyContactRelationship,
+        medicalConditions,
+        allergies,
+        currentMedications,
+        pastSurgeries,
+        familyMedicalHistory,
+        lifestyleHabits,
+        dietaryPreferences,
+        exerciseRoutine,
+        JSON.stringify(prakritiAssessment),
+        JSON.stringify(vikritiAssessment),
+        doshaDominance,
       ]
     );
 
     res.status(201).json({
-      message: 'Patient profile created successfully',
-      patient: newPatient.rows[0]
+      message: "Patient profile created successfully",
+      patient: newPatient.rows[0],
     });
   } catch (error) {
-    console.error('Create patient error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Create patient error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
 // Practitioner Management Routes
-app.get('/api/practitioners', authenticateToken, async (req, res) => {
+app.get("/api/practitioners", authenticateToken, async (req, res) => {
   try {
     const practitioners = await pool.query(`
       SELECT p.*, u.first_name, u.last_name, u.email, u.phone
@@ -266,60 +295,139 @@ app.get('/api/practitioners', authenticateToken, async (req, res) => {
     `);
     res.json(practitioners.rows);
   } catch (error) {
-    console.error('Get practitioners error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Get practitioners error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.post('/api/practitioners', authenticateToken, authorizeRoles('admin'), async (req, res) => {
-  try {
-    const {
-      licenseNumber,
-      qualification,
-      specializations,
-      experienceYears,
-      languagesSpoken,
-      consultationFee,
-      clinicAffiliation,
-      practiceStartDate,
-      workingHours,
-      consultationDuration,
-      maxPatientsPerDay
-    } = req.body;
+app.post(
+  "/api/practitioners",
+  authenticateToken,
+  authorizeRoles("admin"),
+  async (req, res) => {
+    try {
+      const {
+        licenseNumber,
+        qualification,
+        specializations,
+        experienceYears,
+        languagesSpoken,
+        consultationFee,
+        clinicAffiliation,
+        practiceStartDate,
+        workingHours,
+        consultationDuration,
+        maxPatientsPerDay,
+      } = req.body;
 
-    const practitionerId = uuidv4();
-    const newPractitioner = await pool.query(
-      `INSERT INTO practitioners (
+      const practitionerId = uuidv4();
+      const newPractitioner = await pool.query(
+        `INSERT INTO practitioners (
         practitioner_id, user_id, license_number, qualification, specializations,
         experience_years, languages_spoken, consultation_fee, clinic_affiliation,
         practice_start_date, working_hours, consultation_duration, max_patients_per_day
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING *`,
-      [
-        practitionerId, req.user.userId, licenseNumber, qualification,
-        JSON.stringify(specializations), experienceYears, JSON.stringify(languagesSpoken),
-        consultationFee, clinicAffiliation, practiceStartDate, JSON.stringify(workingHours),
-        consultationDuration, maxPatientsPerDay
-      ]
-    );
+        [
+          practitionerId,
+          req.user.userId,
+          licenseNumber,
+          qualification,
+          JSON.stringify(specializations),
+          experienceYears,
+          JSON.stringify(languagesSpoken),
+          consultationFee,
+          clinicAffiliation,
+          practiceStartDate,
+          JSON.stringify(workingHours),
+          consultationDuration,
+          maxPatientsPerDay,
+        ]
+      );
 
-    res.status(201).json({
-      message: 'Practitioner profile created successfully',
-      practitioner: newPractitioner.rows[0]
-    });
-  } catch (error) {
-    console.error('Create practitioner error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+      res.status(201).json({
+        message: "Practitioner profile created successfully",
+        practitioner: newPractitioner.rows[0],
+      });
+    } catch (error) {
+      console.error("Create practitioner error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
-});
+);
+
+// Get current practitioner's profile
+app.get(
+  "/api/practitioners/profile",
+  authenticateToken,
+  authorizeRoles("practitioner"),
+  async (req, res) => {
+    try {
+      const [rows] = await pool.query(
+        `SELECT p.*, u.first_name, u.last_name, u.email, u.phone
+         FROM practitioners p
+         JOIN users u ON p.user_id = u.user_id
+         WHERE p.user_id = ?`,
+        [req.user.userId]
+      );
+
+      if (rows.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "Practitioner profile not found" });
+      }
+
+      res.json(rows[0]);
+    } catch (error) {
+      console.error("Get practitioner profile error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// Update current practitioner's profile
+app.put(
+  "/api/practitioners/profile",
+  authenticateToken,
+  authorizeRoles("practitioner"),
+  async (req, res) => {
+    try {
+      const { workingHours } = req.body;
+
+      const updatedPractitioner = await pool.query(
+        `
+      UPDATE practitioners
+      SET working_hours = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE user_id = $2
+      RETURNING *
+    `,
+        [JSON.stringify(workingHours), req.user.userId]
+      );
+
+      if (updatedPractitioner.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "Practitioner profile not found" });
+      }
+
+      res.json({
+        message: "Profile updated successfully",
+        practitioner: updatedPractitioner.rows[0],
+      });
+    } catch (error) {
+      console.error("Update practitioner profile error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
 
 // Appointment Management Routes
-app.get('/api/appointments', authenticateToken, async (req, res) => {
+app.get("/api/appointments", authenticateToken, async (req, res) => {
   try {
     let query;
     let params = [];
 
-    if (req.user.role === 'patient') {
+    if (req.user.role === "patient") {
       // Get patient's appointments
       query = `
         SELECT a.*, p.first_name as patient_first_name, p.last_name as patient_last_name,
@@ -333,7 +441,7 @@ app.get('/api/appointments', authenticateToken, async (req, res) => {
         ORDER BY a.appointment_date DESC, a.start_time DESC
       `;
       params = [req.user.userId];
-    } else if (req.user.role === 'practitioner') {
+    } else if (req.user.role === "practitioner") {
       // Get practitioner's appointments
       query = `
         SELECT a.*, p.first_name as patient_first_name, p.last_name as patient_last_name,
@@ -364,12 +472,12 @@ app.get('/api/appointments', authenticateToken, async (req, res) => {
     const appointments = await pool.query(query, params);
     res.json(appointments.rows);
   } catch (error) {
-    console.error('Get appointments error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Get appointments error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.post('/api/appointments', authenticateToken, async (req, res) => {
+app.post("/api/appointments", authenticateToken, async (req, res) => {
   try {
     const {
       practitionerId,
@@ -379,17 +487,23 @@ app.post('/api/appointments', authenticateToken, async (req, res) => {
       serviceType,
       consultationType,
       specialInstructions,
-      preparationNotes
+      preparationNotes,
     } = req.body;
 
     // Get patient ID from user ID
-    const patient = await pool.query('SELECT patient_id FROM patients WHERE user_id = $1', [req.user.userId]);
+    const patient = await pool.query(
+      "SELECT patient_id FROM patients WHERE user_id = $1",
+      [req.user.userId]
+    );
     if (patient.rows.length === 0) {
-      return res.status(400).json({ error: 'Patient profile not found' });
+      return res.status(400).json({ error: "Patient profile not found" });
     }
 
     const appointmentId = uuidv4();
-    const confirmationCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const confirmationCode = Math.random()
+      .toString(36)
+      .substring(2, 10)
+      .toUpperCase();
 
     const newAppointment = await pool.query(
       `INSERT INTO appointments (
@@ -399,29 +513,37 @@ app.post('/api/appointments', authenticateToken, async (req, res) => {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *`,
       [
-        appointmentId, patient.rows[0].patient_id, practitionerId, appointmentDate,
-        startTime, endTime, serviceType, consultationType, specialInstructions,
-        preparationNotes, confirmationCode
+        appointmentId,
+        patient.rows[0].patient_id,
+        practitionerId,
+        appointmentDate,
+        startTime,
+        endTime,
+        serviceType,
+        consultationType,
+        specialInstructions,
+        preparationNotes,
+        confirmationCode,
       ]
     );
 
     res.status(201).json({
-      message: 'Appointment booked successfully',
-      appointment: newAppointment.rows[0]
+      message: "Appointment booked successfully",
+      appointment: newAppointment.rows[0],
     });
   } catch (error) {
-    console.error('Create appointment error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Create appointment error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
 // Treatment Plan Routes
-app.get('/api/treatment-plans', authenticateToken, async (req, res) => {
+app.get("/api/treatment-plans", authenticateToken, async (req, res) => {
   try {
     let query;
     let params = [];
 
-    if (req.user.role === 'patient') {
+    if (req.user.role === "patient") {
       query = `
         SELECT tp.*, p.first_name as patient_first_name, p.last_name as patient_last_name,
                pr.first_name as practitioner_first_name, pr.last_name as practitioner_last_name
@@ -434,7 +556,7 @@ app.get('/api/treatment-plans', authenticateToken, async (req, res) => {
         ORDER BY tp.created_at DESC
       `;
       params = [req.user.userId];
-    } else if (req.user.role === 'practitioner') {
+    } else if (req.user.role === "practitioner") {
       query = `
         SELECT tp.*, p.first_name as patient_first_name, p.last_name as patient_last_name,
                pr.first_name as practitioner_first_name, pr.last_name as practitioner_last_name
@@ -463,231 +585,294 @@ app.get('/api/treatment-plans', authenticateToken, async (req, res) => {
     const treatmentPlans = await pool.query(query, params);
     res.json(treatmentPlans.rows);
   } catch (error) {
-    console.error('Get treatment plans error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Get treatment plans error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.post('/api/treatment-plans', authenticateToken, authorizeRoles('practitioner', 'admin'), async (req, res) => {
-  try {
-    const {
-      patientId,
-      treatmentName,
-      treatmentType,
-      startDate,
-      endDate,
-      totalSessions,
-      purvakarmaProtocols,
-      pradhanakarmaProtocols,
-      paschatkarmaProtocols,
-      contraindications,
-      expectedOutcomes,
-      specialInstructions,
-      totalCost
-    } = req.body;
+app.post(
+  "/api/treatment-plans",
+  authenticateToken,
+  authorizeRoles("practitioner", "admin"),
+  async (req, res) => {
+    try {
+      const {
+        patientId,
+        treatmentName,
+        treatmentType,
+        startDate,
+        endDate,
+        totalSessions,
+        purvakarmaProtocols,
+        pradhanakarmaProtocols,
+        paschatkarmaProtocols,
+        contraindications,
+        expectedOutcomes,
+        specialInstructions,
+        totalCost,
+      } = req.body;
 
-    const treatmentPlanId = uuidv4();
-    const newTreatmentPlan = await pool.query(
-      `INSERT INTO treatment_plans (
+      const treatmentPlanId = uuidv4();
+      const newTreatmentPlan = await pool.query(
+        `INSERT INTO treatment_plans (
         treatment_plan_id, patient_id, practitioner_id, treatment_name, treatment_type,
         start_date, end_date, total_sessions, purvakarma_protocols, pradhanakarma_protocols,
         paschatkarma_protocols, contraindications, expected_outcomes, special_instructions,
         total_cost
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING *`,
-      [
-        treatmentPlanId, patientId, req.user.userId, treatmentName, treatmentType,
-        startDate, endDate, totalSessions, JSON.stringify(purvakarmaProtocols),
-        JSON.stringify(pradhanakarmaProtocols), JSON.stringify(paschatkarmaProtocols),
-        contraindications, JSON.stringify(expectedOutcomes), specialInstructions, totalCost
-      ]
-    );
+        [
+          treatmentPlanId,
+          patientId,
+          req.user.userId,
+          treatmentName,
+          treatmentType,
+          startDate,
+          endDate,
+          totalSessions,
+          JSON.stringify(purvakarmaProtocols),
+          JSON.stringify(pradhanakarmaProtocols),
+          JSON.stringify(paschatkarmaProtocols),
+          contraindications,
+          JSON.stringify(expectedOutcomes),
+          specialInstructions,
+          totalCost,
+        ]
+      );
 
-    res.status(201).json({
-      message: 'Treatment plan created successfully',
-      treatmentPlan: newTreatmentPlan.rows[0]
-    });
-  } catch (error) {
-    console.error('Create treatment plan error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+      res.status(201).json({
+        message: "Treatment plan created successfully",
+        treatmentPlan: newTreatmentPlan.rows[0],
+      });
+    } catch (error) {
+      console.error("Create treatment plan error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
-});
+);
 
 // Staff Routes
 
 // Get all stock items
-app.get('/api/staff/stock', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
-  try {
-    const [stock] = await pool.execute(`
+app.get(
+  "/api/staff/stock",
+  authenticateToken,
+  authorizeRoles("staff", "admin"),
+  async (req, res) => {
+    try {
+      const [stock] = await pool.execute(`
       SELECT s.*, u.first_name, u.last_name 
       FROM stock s 
       JOIN users u ON s.updated_by = u.user_id 
       ORDER BY s.last_updated DESC
     `);
-    res.json(stock);
-  } catch (error) {
-    console.error('Get stock error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+      res.json(stock);
+    } catch (error) {
+      console.error("Get stock error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
-});
+);
 
 // Add new stock item
-app.post('/api/staff/stock', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
-  try {
-    const { itemName, quantity, unit } = req.body;
-    const stockId = uuidv4();
-    
-    await pool.execute(
-      'INSERT INTO stock (id, item_name, quantity, unit, updated_by) VALUES (?, ?, ?, ?, ?)',
-      [stockId, itemName, quantity, unit, req.user.userId]
-    );
+app.post(
+  "/api/staff/stock",
+  authenticateToken,
+  authorizeRoles("staff", "admin"),
+  async (req, res) => {
+    try {
+      const { itemName, quantity, unit } = req.body;
+      const stockId = uuidv4();
 
-    const [newStock] = await pool.execute(`
+      await pool.execute(
+        "INSERT INTO stock (id, item_name, quantity, unit, updated_by) VALUES (?, ?, ?, ?, ?)",
+        [stockId, itemName, quantity, unit, req.user.userId]
+      );
+
+      const [newStock] = await pool.execute(
+        `
       SELECT s.*, u.first_name, u.last_name 
       FROM stock s 
       JOIN users u ON s.updated_by = u.user_id 
       WHERE s.id = ?
-    `, [stockId]);
+    `,
+        [stockId]
+      );
 
-    res.status(201).json({
-      message: 'Stock item added successfully',
-      stock: newStock[0]
-    });
-  } catch (error) {
-    console.error('Add stock error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+      res.status(201).json({
+        message: "Stock item added successfully",
+        stock: newStock[0],
+      });
+    } catch (error) {
+      console.error("Add stock error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
-});
+);
 
 // Update stock item
-app.put('/api/staff/stock/:id', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { itemName, quantity, unit } = req.body;
+app.put(
+  "/api/staff/stock/:id",
+  authenticateToken,
+  authorizeRoles("staff", "admin"),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { itemName, quantity, unit } = req.body;
 
-    await pool.execute(
-      'UPDATE stock SET item_name = ?, quantity = ?, unit = ?, updated_by = ? WHERE id = ?',
-      [itemName, quantity, unit, req.user.userId, id]
-    );
+      await pool.execute(
+        "UPDATE stock SET item_name = ?, quantity = ?, unit = ?, updated_by = ? WHERE id = ?",
+        [itemName, quantity, unit, req.user.userId, id]
+      );
 
-    const [updatedStock] = await pool.execute(`
+      const [updatedStock] = await pool.execute(
+        `
       SELECT s.*, u.first_name, u.last_name 
       FROM stock s 
       JOIN users u ON s.updated_by = u.user_id 
       WHERE s.id = ?
-    `, [id]);
+    `,
+        [id]
+      );
 
-    if (updatedStock.length === 0) {
-      return res.status(404).json({ error: 'Stock item not found' });
+      if (updatedStock.length === 0) {
+        return res.status(404).json({ error: "Stock item not found" });
+      }
+
+      res.json({
+        message: "Stock item updated successfully",
+        stock: updatedStock[0],
+      });
+    } catch (error) {
+      console.error("Update stock error:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
-
-    res.json({
-      message: 'Stock item updated successfully',
-      stock: updatedStock[0]
-    });
-  } catch (error) {
-    console.error('Update stock error:', error);
-    res.status(500).json({ error: 'Internal server error' });
   }
-});
+);
 
 // Delete stock item
-app.delete('/api/staff/stock/:id', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Check if stock item exists
-    const [existingStock] = await pool.execute('SELECT * FROM stock WHERE id = ?', [id]);
-    if (existingStock.length === 0) {
-      return res.status(404).json({ error: 'Stock item not found' });
+app.delete(
+  "/api/staff/stock/:id",
+  authenticateToken,
+  authorizeRoles("staff", "admin"),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Check if stock item exists
+      const [existingStock] = await pool.execute(
+        "SELECT * FROM stock WHERE id = ?",
+        [id]
+      );
+      if (existingStock.length === 0) {
+        return res.status(404).json({ error: "Stock item not found" });
+      }
+
+      // Delete the stock item
+      await pool.execute("DELETE FROM stock WHERE id = ?", [id]);
+
+      res.json({
+        message: "Stock item deleted successfully",
+      });
+    } catch (error) {
+      console.error("Delete stock error:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
-    
-    // Delete the stock item
-    await pool.execute('DELETE FROM stock WHERE id = ?', [id]);
-    
-    res.json({
-      message: 'Stock item deleted successfully'
-    });
-  } catch (error) {
-    console.error('Delete stock error:', error);
-    res.status(500).json({ error: 'Internal server error' });
   }
-});
+);
 
 // Get all rooms
-app.get('/api/staff/rooms', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
-  try {
-    const [rooms] = await pool.execute(`
+app.get(
+  "/api/staff/rooms",
+  authenticateToken,
+  authorizeRoles("staff", "admin"),
+  async (req, res) => {
+    try {
+      const [rooms] = await pool.execute(`
       SELECT r.*, u.first_name, u.last_name 
       FROM rooms r 
       JOIN users u ON r.last_updated_by = u.user_id 
       ORDER BY r.room_name
     `);
-    res.json(rooms);
-  } catch (error) {
-    console.error('Get rooms error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+      res.json(rooms);
+    } catch (error) {
+      console.error("Get rooms error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
-});
+);
 
 // Update room status
-app.put('/api/staff/rooms/:id', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
+app.put(
+  "/api/staff/rooms/:id",
+  authenticateToken,
+  authorizeRoles("staff", "admin"),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
 
-    const validStatuses = ['available', 'occupied', 'maintenance'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
-    }
+      const validStatuses = ["available", "occupied", "maintenance"];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
 
-    await pool.execute(
-      'UPDATE rooms SET status = ?, last_updated_by = ? WHERE id = ?',
-      [status, req.user.userId, id]
-    );
+      await pool.execute(
+        "UPDATE rooms SET status = ?, last_updated_by = ? WHERE id = ?",
+        [status, req.user.userId, id]
+      );
 
-    const [updatedRoom] = await pool.execute(`
+      const [updatedRoom] = await pool.execute(
+        `
       SELECT r.*, u.first_name, u.last_name 
       FROM rooms r 
       JOIN users u ON r.last_updated_by = u.user_id 
       WHERE r.id = ?
-    `, [id]);
+    `,
+        [id]
+      );
 
-    if (updatedRoom.length === 0) {
-      return res.status(404).json({ error: 'Room not found' });
+      if (updatedRoom.length === 0) {
+        return res.status(404).json({ error: "Room not found" });
+      }
+
+      res.json({
+        message: "Room status updated successfully",
+        room: updatedRoom[0],
+      });
+    } catch (error) {
+      console.error("Update room error:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
-
-    res.json({
-      message: 'Room status updated successfully',
-      room: updatedRoom[0]
-    });
-  } catch (error) {
-    console.error('Update room error:', error);
-    res.status(500).json({ error: 'Internal server error' });
   }
-});
+);
 
 // File upload route
-app.post('/api/upload', authenticateToken, upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
+app.post(
+  "/api/upload",
+  authenticateToken,
+  upload.single("file"),
+  (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    res.json({
+      message: "File uploaded successfully",
+      filePath: req.file.path,
+      filename: req.file.filename,
+    });
   }
-  res.json({
-    message: 'File uploaded successfully',
-    filePath: req.file.path,
-    filename: req.file.filename
-  });
-});
+);
 
 // Health check route
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+app.get("/api/health", (req, res) => {
+  res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  res.status(500).json({ error: "Something went wrong!" });
 });
 
 // Start server
