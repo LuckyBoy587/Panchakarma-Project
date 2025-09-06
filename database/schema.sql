@@ -312,14 +312,6 @@ INSERT INTO patients (patient_id, user_id, date_of_birth, gender, blood_group, h
 INSERT INTO users (user_id, email, phone, password_hash, user_type, first_name, last_name, email_verified, phone_verified) VALUES
 ('staff-001', 'staff@panchakarma.com', '+1234567894', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'staff', 'Rajesh', 'Kumar', true, true);
 
--- Sample stock data
-INSERT INTO stock (id, item_name, quantity, unit, updated_by) VALUES
-('stock-001', 'Medicated Oil - Dhanwantharam', 25, 'bottles', 'staff-001'),
-('stock-002', 'Triphala Powder', 50, 'kg', 'staff-001'),
-('stock-003', 'Ghee (Clarified Butter)', 30, 'kg', 'staff-001'),
-('stock-004', 'Honey', 20, 'kg', 'staff-001'),
-('stock-005', 'Herbal Tea Bags', 100, 'packets', 'staff-001');
-
 -- Sample rooms data
 INSERT INTO rooms (id, room_name, status, last_updated_by) VALUES
 ('room-001', 'Treatment Room 1', 'available', 'staff-001'),

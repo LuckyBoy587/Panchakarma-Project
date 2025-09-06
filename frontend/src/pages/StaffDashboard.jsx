@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { Package, Home, Plus, Edit2, CheckCircle, XCircle, Wrench } from 'lucide-react';
@@ -7,18 +7,50 @@ const StaffDashboard = () => {
   const { user } = useAuth();
   const [stock, setStock] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [availableItems, setAvailableItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showStockModal, setShowStockModal] = useState(false);
   const [editingStock, setEditingStock] = useState(null);
   const [stockForm, setStockForm] = useState({
+    itemId: '',
     itemName: '',
     quantity: '',
     unit: ''
   });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
+  const selectRef = useRef(null);
 
   useEffect(() => {
     fetchData();
+    loadAvailableItems();
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (selectRef.current && !selectRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const loadAvailableItems = async () => {
+    try {
+      const response = await fetch('/data/stock-items.json');
+      const data = await response.json();
+      setAvailableItems(data);
+    } catch (error) {
+      console.error('Error loading available items:', error);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -36,8 +68,72 @@ const StaffDashboard = () => {
     }
   };
 
+  // Get unique categories from available items
+  const categories = ['All', ...new Set(availableItems.map(item => item.category))];
+
+  // Filter items based on search term and selected category
+  const filteredItems = availableItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   const handleStockSubmit = async (e) => {
     e.preventDefault();
+    
+    // Clear previous validation errors
+    setValidationErrors({});
+    
+    // Validation for adding new items
+    if (!editingStock) {
+      const errors = {};
+      
+      if (!stockForm.itemId) {
+        errors.item = 'Please select an item';
+      }
+      
+      if (!stockForm.quantity || parseInt(stockForm.quantity) <= 0) {
+        errors.quantity = 'Please enter a valid quantity greater than 0';
+      }
+      
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
+        return;
+      }
+    }
+    
+    // Handle editing with quantity 0 (delete item)
+    if (editingStock && parseInt(stockForm.quantity) === 0) {
+      const confirmDelete = window.confirm(
+        `Are you sure you want to delete "${stockForm.itemName}" from stock?`
+      );
+      
+      if (!confirmDelete) {
+        return;
+      }
+      
+      try {
+        await axios.delete(`/api/staff/stock/${editingStock.id}`);
+        setShowStockModal(false);
+        setEditingStock(null);
+        setStockForm({ itemId: '', itemName: '', quantity: '', unit: '' });
+        fetchData();
+        return;
+      } catch (error) {
+        console.error('Error deleting stock:', error);
+        return;
+      }
+    }
+    
+    // Validation for editing (quantity must be valid)
+    if (editingStock) {
+      const quantity = parseInt(stockForm.quantity);
+      if (!stockForm.quantity || quantity < 0) {
+        setValidationErrors({ quantity: 'Please enter a valid quantity (0 to delete)' });
+        return;
+      }
+    }
+    
     try {
       if (editingStock) {
         await axios.put(`/api/staff/stock/${editingStock.id}`, {
@@ -54,20 +150,50 @@ const StaffDashboard = () => {
       }
       setShowStockModal(false);
       setEditingStock(null);
-      setStockForm({ itemName: '', quantity: '', unit: '' });
+      setStockForm({ itemId: '', itemName: '', quantity: '', unit: '' });
       fetchData();
     } catch (error) {
       console.error('Error saving stock:', error);
     }
   };
 
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    setIsDropdownOpen(true);
+  };
+
+  const handleItemSelect = (itemId) => {
+    const selectedItem = availableItems.find(item => item.id.toString() === itemId);
+    if (selectedItem) {
+      setStockForm({
+        ...stockForm,
+        itemId: itemId,
+        itemName: selectedItem.name,
+        unit: selectedItem.unit
+      });
+      // Clear item validation error when item is selected
+      if (validationErrors.item) {
+        setValidationErrors({...validationErrors, item: ''});
+      }
+    }
+    setIsDropdownOpen(false);
+  };
+
   const handleEditStock = (item) => {
+    // Find the item in available items to get the ID
+    const availableItem = availableItems.find(availItem => availItem.name === item.item_name);
+    
     setEditingStock(item);
     setStockForm({
+      itemId: availableItem ? availableItem.id.toString() : '',
       itemName: item.item_name,
       quantity: item.quantity.toString(),
       unit: item.unit
     });
+    setSearchTerm('');
+    setSelectedCategory('All');
+    setIsDropdownOpen(false);
+    setValidationErrors({});
     setShowStockModal(true);
   };
 
@@ -135,7 +261,11 @@ const StaffDashboard = () => {
           <button
             onClick={() => {
               setEditingStock(null);
-              setStockForm({ itemName: '', quantity: '', unit: '' });
+              setStockForm({ itemId: '', itemName: '', quantity: '', unit: '' });
+              setSearchTerm('');
+              setSelectedCategory('All');
+              setIsDropdownOpen(false);
+              setValidationErrors({});
               setShowStockModal(true);
             }}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
@@ -151,6 +281,9 @@ const StaffDashboard = () => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Item Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Category
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Quantity
@@ -170,34 +303,40 @@ const StaffDashboard = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {stock.map((item) => (
-                  <tr key={item.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {item.item_name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {item.quantity}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {item.unit}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(item.last_updated).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {item.first_name} {item.last_name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleEditStock(item)}
-                        className="text-blue-600 hover:text-blue-900 flex items-center"
-                      >
-                        <Edit2 className="h-4 w-4 mr-1" />
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {stock.map((item) => {
+                  const availableItem = availableItems.find(availItem => availItem.name === item.item_name);
+                  return (
+                    <tr key={item.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {item.item_name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {availableItem ? availableItem.category : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.quantity}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.unit}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(item.last_updated).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.first_name} {item.last_name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => handleEditStock(item)}
+                          className="text-blue-600 hover:text-blue-900 flex items-center"
+                        >
+                          <Edit2 className="h-4 w-4 mr-1" />
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -260,7 +399,7 @@ const StaffDashboard = () => {
       {/* Stock Modal */}
       {showStockModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="relative top-20 mx-auto p-5 border w-[500px] shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 {editingStock ? 'Edit Stock Item' : 'Add New Stock Item'}
@@ -268,14 +407,108 @@ const StaffDashboard = () => {
               <form onSubmit={handleStockSubmit}>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Item
+                  </label>
+                  
+                  {/* Search Input */}
+                  <div className="relative mb-2">
+                    <input
+                      type="text"
+                      placeholder="Search items..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {searchTerm && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchTerm('')}
+                        className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Category Filter Buttons */}
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {categories.map((category) => (
+                      <button
+                        key={category}
+                        type="button"
+                        onClick={() => handleCategorySelect(category)}
+                        className={`px-3 py-1 text-xs rounded-full ${
+                          selectedCategory === category
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {/* Custom Dropdown */}
+                  <div className="relative" ref={selectRef}>
+                    <div
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 cursor-pointer bg-white flex justify-between items-center ${
+                        validationErrors.item 
+                          ? 'border-red-500 focus:ring-red-500' 
+                          : 'border-gray-300 focus:ring-blue-500'
+                      }`}
+                    >
+                      <span className={stockForm.itemId ? 'text-gray-900' : 'text-gray-500'}>
+                        {stockForm.itemId 
+                          ? `${stockForm.itemName} (${availableItems.find(item => item.id.toString() === stockForm.itemId)?.category})`
+                          : (filteredItems.length === 0 
+                              ? 'No items found' 
+                              : `Select an item... (${filteredItems.length} available)`)
+                        }
+                      </span>
+                      <svg 
+                        className={`w-5 h-5 transition-transform ${isDropdownOpen ? 'transform rotate-180' : ''}`}
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                    
+                    {validationErrors.item && (
+                      <p className="mt-1 text-sm text-red-600">{validationErrors.item}</p>
+                    )}
+                    
+                    {isDropdownOpen && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        {filteredItems.length === 0 ? (
+                          <div className="px-3 py-2 text-gray-500 text-sm">No items found</div>
+                        ) : (
+                          filteredItems.map((item) => (
+                            <div
+                              key={item.id}
+                              onClick={() => handleItemSelect(item.id.toString())}
+                              className="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="font-medium text-gray-900">{item.name}</div>
+                              <div className="text-xs text-gray-500">{item.category}</div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Item Name
                   </label>
                   <input
                     type="text"
                     value={stockForm.itemName}
-                    onChange={(e) => setStockForm({...stockForm, itemName: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 cursor-not-allowed"
                   />
                 </div>
                 <div className="mb-4">
@@ -285,11 +518,24 @@ const StaffDashboard = () => {
                   <input
                     type="number"
                     value={stockForm.quantity}
-                    onChange={(e) => setStockForm({...stockForm, quantity: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => {
+                      setStockForm({...stockForm, quantity: e.target.value});
+                      // Clear quantity validation error when user starts typing
+                      if (validationErrors.quantity) {
+                        setValidationErrors({...validationErrors, quantity: ''});
+                      }
+                    }}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                      validationErrors.quantity 
+                        ? 'border-red-500 focus:ring-red-500' 
+                        : 'border-gray-300 focus:ring-blue-500'
+                    }`}
                     required
                     min="0"
                   />
+                  {validationErrors.quantity && (
+                    <p className="mt-1 text-sm text-red-600">{validationErrors.quantity}</p>
+                  )}
                 </div>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -298,9 +544,8 @@ const StaffDashboard = () => {
                   <input
                     type="text"
                     value={stockForm.unit}
-                    onChange={(e) => setStockForm({...stockForm, unit: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 cursor-not-allowed"
                   />
                 </div>
                 <div className="flex justify-end space-x-3">

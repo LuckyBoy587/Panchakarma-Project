@@ -591,6 +591,29 @@ app.put('/api/staff/stock/:id', authenticateToken, authorizeRoles('staff', 'admi
   }
 });
 
+// Delete stock item
+app.delete('/api/staff/stock/:id', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if stock item exists
+    const [existingStock] = await pool.execute('SELECT * FROM stock WHERE id = ?', [id]);
+    if (existingStock.length === 0) {
+      return res.status(404).json({ error: 'Stock item not found' });
+    }
+    
+    // Delete the stock item
+    await pool.execute('DELETE FROM stock WHERE id = ?', [id]);
+    
+    res.json({
+      message: 'Stock item deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete stock error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Get all rooms
 app.get('/api/staff/rooms', authenticateToken, authorizeRoles('staff', 'admin'), async (req, res) => {
   try {
