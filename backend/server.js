@@ -494,7 +494,6 @@ app.get("/api/appointments", authenticateToken, async (req, res) => {
     }
 
     const [appointments] = await pool.execute(query, params);
-    console.log('Appointments query result:', appointments);
     res.json(appointments);
   } catch (error) {
     console.error("Get appointments error:", error);
@@ -530,8 +529,8 @@ app.post("/api/appointments", authenticateToken, async (req, res) => {
       `INSERT INTO appointments (
         appointment_id, patient_id, practitioner_id, appointment_date, start_time, end_time,
         service_type, consultation_type, special_instructions, preparation_notes,
-        confirmation_code
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        booking_channel, confirmation_code
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         appointmentId,
         patient[0].patient_id,
@@ -543,6 +542,7 @@ app.post("/api/appointments", authenticateToken, async (req, res) => {
         consultationType,
         specialInstructions,
         preparationNotes,
+        'app',
         Math.random().toString(36).substring(2, 10).toUpperCase(),
       ]
     );
@@ -985,6 +985,62 @@ app.put("/api/slots/:slotId", authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error("Update slot error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get available slots across all practitioners for a specific date and time
+app.post("/api/slots/available", authenticateToken, async (req, res) => {
+  try {
+    const { date, time } = req.body;
+
+    if (!date || !time) {
+      return res.status(400).json({ error: "Date and time are required" });
+    }
+
+    // Get day of week from date
+    const dateObj = new Date(date);
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayOfWeek = days[dateObj.getDay()];
+
+    console.log('Searching for available doctors:', { date, time, dayOfWeek });
+
+    // Get all practitioners
+    const [practitioners] = await pool.execute(`
+      SELECT 
+        p.practitioner_id,
+        first_name,
+        last_name,
+        p.specializations
+      FROM practitioners p
+      natural join users
+    `);
+
+    console.log('Total practitioners:', practitioners.length);
+
+    // For each practitioner, check if they have a booked slot at the specified time
+    const availablePractitioners = [];
+
+    for (const practitioner of practitioners) {
+      // Check if this practitioner has a booked appointment at the specified date and time
+      const [bookedAppointments] = await pool.execute(`
+        SELECT COUNT(*) as booked_count
+        FROM appointments
+        WHERE practitioner_id = ?
+          AND appointment_date = ?
+          AND start_time LIKE ?
+          AND status IN ('scheduled', 'confirmed')
+      `, [practitioner.practitioner_id, date, `${time}%`]);
+      console.log(bookedAppointments);
+      if (bookedAppointments[0].booked_count === 0) {
+        availablePractitioners.push(practitioner);
+      }
+    }
+
+    console.log('Available practitioners:', availablePractitioners.length);
+    res.json(availablePractitioners);
+  } catch (error) {
+    console.error("Get available doctors error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

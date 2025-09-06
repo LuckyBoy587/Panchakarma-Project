@@ -19,6 +19,7 @@ async function initializeDatabase() {
   try {
     pool = mysql.createPool(dbConfig);
     console.log("Database connected successfully");
+    return pool;
   } catch (error) {
     console.error("Database connection failed:", error);
     throw error;
@@ -86,20 +87,23 @@ async function generatePractitionerSlots(practitionerId, regenerate = false, dbP
 
     let workingHours = [];
     try {
+      console.log('Raw working_hours from DB:', practitioners[0].working_hours);
       workingHours = JSON.parse(practitioners[0].working_hours || '[]');
+      console.log('Parsed working hours:', workingHours);
     } catch (parseError) {
       console.error('Error parsing working hours:', parseError);
-      // Use default working hours if parsing fails
-      workingHours = [
-        { day: 'monday', isWorking: true, startTime: '09:00', endTime: '17:00' },
-        { day: 'tuesday', isWorking: true, startTime: '09:00', endTime: '17:00' },
-        { day: 'wednesday', isWorking: true, startTime: '09:00', endTime: '17:00' },
-        { day: 'thursday', isWorking: true, startTime: '09:00', endTime: '17:00' },
-        { day: 'friday', isWorking: true, startTime: '09:00', endTime: '17:00' },
-        { day: 'saturday', isWorking: false, startTime: '09:00', endTime: '17:00' },
-        { day: 'sunday', isWorking: false, startTime: '09:00', endTime: '17:00' },
-      ];
     }
+
+    // Always use default working hours for now
+    workingHours = [
+      { day: 'monday', isWorking: true, startTime: '09:00', endTime: '17:00' },
+      { day: 'tuesday', isWorking: true, startTime: '09:00', endTime: '17:00' },
+      { day: 'wednesday', isWorking: true, startTime: '09:00', endTime: '17:00' },
+      { day: 'thursday', isWorking: true, startTime: '09:00', endTime: '17:00' },
+      { day: 'friday', isWorking: true, startTime: '09:00', endTime: '17:00' },
+      { day: 'saturday', isWorking: true, startTime: '09:00', endTime: '17:00' },
+      { day: 'sunday', isWorking: true, startTime: '09:00', endTime: '17:00' },
+    ];
 
     // If no working hours are set, use defaults
     if (!workingHours || workingHours.length === 0) {

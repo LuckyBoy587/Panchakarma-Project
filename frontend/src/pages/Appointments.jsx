@@ -6,35 +6,23 @@ import { FaCalendarAlt, FaClock, FaUserMd, FaCheck } from 'react-icons/fa';
 
 const Appointments = () => {
   const { user } = useAuth();
-  const [practitioners, setPractitioners] = useState([]);
-  const [selectedPractitioner, setSelectedPractitioner] = useState('');
-  const [selectedDay, setSelectedDay] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
   const [availableSlots, setAvailableSlots] = useState([]);
   const [userAppointments, setUserAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [bookingSlot, setBookingSlot] = useState(null);
 
-  const daysOfWeek = [
-    'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
+  // Common time slots for selection
+  const timeSlots = [
+    '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+    '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'
   ];
 
   useEffect(() => {
-    fetchPractitioners();
     fetchUserAppointments();
   }, []);
-
-  const fetchPractitioners = async () => {
-    try {
-      const response = await axios.get('/api/practitioners');
-      console.log('Practitioners response:', response.data);
-      setPractitioners(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
-      console.error('Error fetching practitioners:', error);
-      toast.error('Failed to load practitioners');
-      setPractitioners([]);
-    }
-  };
 
   const fetchUserAppointments = async () => {
     try {
@@ -49,15 +37,11 @@ const Appointments = () => {
   };
 
   const fetchAvailableSlots = async () => {
-    if (!selectedPractitioner || !selectedDate) return;
-
+    if (!selectedDate || !selectedTime) return;
     setLoading(true);
     try {
-      // Get the day of the week from the selected date
-      const date = new Date(selectedDate);
-      const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-
-      const response = await axios.get(`/api/slots/${selectedPractitioner}?day=${dayOfWeek}&status=free`);
+      console.log('Fetching available slots for:', selectedDate, selectedTime);
+      const response = await axios.post(`/api/slots/available`, { date: selectedDate, time: selectedTime });
       setAvailableSlots(response.data);
     } catch (error) {
       console.error('Error fetching slots:', error);
@@ -68,13 +52,13 @@ const Appointments = () => {
   };
 
   useEffect(() => {
-    if (selectedPractitioner && selectedDate) {
+    if (selectedDate && selectedTime) {
       fetchAvailableSlots();
     }
-  }, [selectedPractitioner, selectedDate]);
+  }, [selectedDate, selectedTime]);
 
-  const bookAppointment = async (slot) => {
-    setBookingSlot(slot.slot_id);
+  const bookAppointment = async (practitioner) => {
+    setBookingSlot(practitioner.practitioner_id);
     try {
       // First, get patient ID
       const patientResponse = await axios.get('/api/patients');
@@ -85,12 +69,15 @@ const Appointments = () => {
         return;
       }
 
-      // Create appointment
+      // Create appointment with the selected practitioner
       const appointmentData = {
-        practitionerId: selectedPractitioner,
+        practitionerId: practitioner.practitioner_id,
         appointmentDate: selectedDate,
-        startTime: slot.start_time,
-        endTime: slot.end_time,
+        startTime: selectedTime + ':00', // Add seconds
+        endTime: selectedTime.replace(/(\d{2}):(\d{2})/, (match, hours, minutes) => {
+          const newHours = (parseInt(hours) + 1) % 24;
+          return `${newHours.toString().padStart(2, '0')}:${minutes}:00`;
+        }),
         serviceType: 'consultation',
         consultationType: 'in_person',
         specialInstructions: '',
@@ -99,12 +86,9 @@ const Appointments = () => {
 
       const response = await axios.post('/api/appointments', appointmentData);
 
-      // Update slot status to booked
-      await axios.put(`/api/slots/${slot.slot_id}`, { status: 'booked' });
-
       toast.success('Appointment booked successfully!');
-      setAvailableSlots(prev => prev.filter(s => s.slot_id !== slot.slot_id));
-      fetchUserAppointments(); // Refresh appointments list
+      setAvailableSlots(prev => prev.filter(p => p.practitioner_id !== practitioner.practitioner_id));
+      fetchUserAppointments();
 
     } catch (error) {
       console.error('Error booking appointment:', error);
@@ -148,25 +132,6 @@ const Appointments = () => {
           </h2>
 
           <div className="space-y-4">
-            {/* Practitioner Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Practitioner
-              </label>
-              <select
-                value={selectedPractitioner}
-                onChange={(e) => setSelectedPractitioner(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Choose a practitioner...</option>
-                {practitioners.map((practitioner) => (
-                  <option key={practitioner.practitioner_id} value={practitioner.practitioner_id}>
-                    Dr. {practitioner.first_name} {practitioner.last_name} - {practitioner.specializations ? (practitioner.specializations).join(', ') : 'General'}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             {/* Date Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -181,52 +146,72 @@ const Appointments = () => {
               />
             </div>
 
-            {/* Generate Slots Button - Only for admin/practitioner */}
-            {selectedPractitioner && (user?.userType === 'admin' || user?.userType === 'practitioner') && (
-              <div className="mt-4">
-                <button
-                  onClick={async () => {
-                    try {
-                      await axios.post(`/api/slots/generate/${selectedPractitioner}`);
-                      toast.success('Slots generated successfully!');
-                      if (selectedDate) {
-                        fetchAvailableSlots();
-                      }
-                    } catch (error) {
-                      toast.error('Failed to generate slots');
-                    }
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Generate Slots for This Practitioner
-                </button>
-              </div>
-            )}
+            {/* Time Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Time
+              </label>
+              <select
+                value={selectedTime}
+                onChange={(e) => setSelectedTime(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Choose a time...</option>
+                {timeSlots.map((time) => (
+                  <option key={time} value={time}>
+                    {formatTime(time)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            {/* Available Slots */}
-            {selectedPractitioner && selectedDate && (
+            {/* Available Doctors */}
+            {selectedDate && selectedTime && (
               <div>
                 <h3 className="text-lg font-medium mb-3 flex items-center">
                   <FaClock className="mr-2 text-green-600" />
-                  Available Slots for {new Date(selectedDate).toLocaleDateString()}
+                  Available Doctors for {new Date(selectedDate).toLocaleDateString()} at {formatTime(selectedTime)}
                 </h3>
                 {loading ? (
-                  <div className="text-center py-4">Loading slots...</div>
+                  <div className="text-center py-4">Loading available doctors...</div>
                 ) : availableSlots.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    {availableSlots.map((slot) => (
+                  <div className="space-y-2">
+                    {availableSlots.map((practitioner) => (
                       <button
-                        key={slot.slot_id}
-                        onClick={() => bookAppointment(slot)}
-                        disabled={bookingSlot === slot.slot_id}
-                        className="p-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md text-sm font-medium text-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        key={practitioner.practitioner_id}
+                        onClick={() => bookAppointment(practitioner)}
+                        disabled={bookingSlot === practitioner.practitioner_id}
+                        className="w-full p-4 bg-green-50 hover:bg-green-100 border border-green-200 rounded-md text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {bookingSlot === slot.slot_id ? 'Booking...' : `${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}`}
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-green-800">
+                              Dr. {practitioner.first_name} {practitioner.last_name}
+                            </p>
+                            <p className="text-sm text-green-600">
+                              {(() => {
+                                try {
+                                  const specs = typeof practitioner.specializations === 'string' 
+                                    ? JSON.parse(practitioner.specializations) 
+                                    : practitioner.specializations;
+                                  return specs && specs.length > 0 ? specs.join(', ') : 'General Practitioner';
+                                } catch {
+                                  return 'General Practitioner';
+                                }
+                              })()}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-green-800">
+                              {bookingSlot === practitioner.practitioner_id ? 'Booking...' : 'Book Now'}
+                            </p>
+                          </div>
+                        </div>
                       </button>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No available slots for this date</p>
+                  <p className="text-gray-500 text-center py-4">No doctors available for this date and time</p>
                 )}
               </div>
             )}

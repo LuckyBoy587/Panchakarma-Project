@@ -11,6 +11,9 @@
  * --regenerate  Delete existing slots and regenerate them
  */
 
+const dotenv = require("dotenv");
+dotenv.config();
+
 const { generateAllPractitionersSlots, initializeDatabase } = require('./slotGenerator');
 
 async function main() {
