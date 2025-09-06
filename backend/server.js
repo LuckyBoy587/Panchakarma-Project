@@ -193,16 +193,27 @@ app.post("/api/auth/login", async (req, res) => {
 app.get(
   "/api/patients",
   authenticateToken,
-  authorizeRoles("admin", "practitioner"),
   async (req, res) => {
     try {
-      const patients = await pool.query(`
-      SELECT p.*, u.first_name, u.last_name, u.email, u.phone
-      FROM patients p
-      JOIN users u ON p.user_id = u.user_id
-      ORDER BY p.created_at DESC
-    `);
-      res.json(patients.rows);
+      if (req.user.role === 'patient') {
+        // Patients can only see their own profile
+        const [patients] = await pool.execute(`
+          SELECT p.*, u.first_name, u.last_name, u.email, u.phone
+          FROM patients p
+          JOIN users u ON p.user_id = u.user_id
+          WHERE p.user_id = ?
+        `, [req.user.userId]);
+        res.json(patients);
+      } else {
+        // Admin and practitioners can see all patients
+        const [patients] = await pool.execute(`
+          SELECT p.*, u.first_name, u.last_name, u.email, u.phone
+          FROM patients p
+          JOIN users u ON p.user_id = u.user_id
+          ORDER BY p.created_at DESC
+        `);
+        res.json(patients);
+      }
     } catch (error) {
       console.error("Get patients error:", error);
       res.status(500).json({ error: "Internal server error" });
@@ -237,15 +248,14 @@ app.post("/api/patients", authenticateToken, async (req, res) => {
     } = req.body;
 
     const patientId = uuidv4();
-    const newPatient = await pool.query(
+    await pool.execute(
       `INSERT INTO patients (
         patient_id, user_id, date_of_birth, gender, blood_group, height_cm, weight_kg,
         occupation, marital_status, emergency_contact_name, emergency_contact_phone,
         emergency_contact_relationship, medical_conditions, allergies, current_medications,
         past_surgeries, family_medical_history, lifestyle_habits, dietary_preferences,
         exercise_routine, prakriti_assessment, vikriti_assessment, dosha_dominance
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
-      RETURNING *`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         patientId,
         req.user.userId,
@@ -273,9 +283,14 @@ app.post("/api/patients", authenticateToken, async (req, res) => {
       ]
     );
 
+    const [newPatient] = await pool.execute(
+      `SELECT * FROM patients WHERE patient_id = ?`,
+      [patientId]
+    );
+
     res.status(201).json({
       message: "Patient profile created successfully",
-      patient: newPatient.rows[0],
+      patient: newPatient[0],
     });
   } catch (error) {
     console.error("Create patient error:", error);
@@ -286,14 +301,15 @@ app.post("/api/patients", authenticateToken, async (req, res) => {
 // Practitioner Management Routes
 app.get("/api/practitioners", authenticateToken, async (req, res) => {
   try {
-    const practitioners = await pool.query(`
+    const [practitioners] = await pool.execute(`
       SELECT p.*, u.first_name, u.last_name, u.email, u.phone
       FROM practitioners p
       JOIN users u ON p.user_id = u.user_id
       WHERE p.verification_status = 'verified'
       ORDER BY p.created_at DESC
     `);
-    res.json(practitioners.rows);
+    console.log('Practitioners query result:', practitioners);
+    res.json(practitioners);
   } catch (error) {
     console.error("Get practitioners error:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -321,13 +337,12 @@ app.post(
       } = req.body;
 
       const practitionerId = uuidv4();
-      const newPractitioner = await pool.query(
+      await pool.execute(
         `INSERT INTO practitioners (
         practitioner_id, user_id, license_number, qualification, specializations,
         experience_years, languages_spoken, consultation_fee, clinic_affiliation,
         practice_start_date, working_hours, consultation_duration, max_patients_per_day
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-      RETURNING *`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           practitionerId,
           req.user.userId,
@@ -345,9 +360,14 @@ app.post(
         ]
       );
 
+      const [newPractitioner] = await pool.execute(
+        `SELECT * FROM practitioners WHERE practitioner_id = ?`,
+        [practitionerId]
+      );
+
       res.status(201).json({
         message: "Practitioner profile created successfully",
-        practitioner: newPractitioner.rows[0],
+        practitioner: newPractitioner[0],
       });
     } catch (error) {
       console.error("Create practitioner error:", error);
@@ -363,7 +383,7 @@ app.get(
   authorizeRoles("practitioner"),
   async (req, res) => {
     try {
-      const [rows] = await pool.query(
+      const [rows] = await pool.execute(
         `SELECT p.*, u.first_name, u.last_name, u.email, u.phone
          FROM practitioners p
          JOIN users u ON p.user_id = u.user_id
@@ -394,17 +414,21 @@ app.put(
     try {
       const { workingHours } = req.body;
 
-      const updatedPractitioner = await pool.query(
+      await pool.execute(
         `
       UPDATE practitioners
-      SET working_hours = $1, updated_at = CURRENT_TIMESTAMP
-      WHERE user_id = $2
-      RETURNING *
+      SET working_hours = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE user_id = ?
     `,
         [JSON.stringify(workingHours), req.user.userId]
       );
 
-      if (updatedPractitioner.rows.length === 0) {
+      const [updatedPractitioner] = await pool.execute(
+        `SELECT * FROM practitioners WHERE user_id = ?`,
+        [req.user.userId]
+      );
+
+      if (updatedPractitioner.length === 0) {
         return res
           .status(404)
           .json({ error: "Practitioner profile not found" });
@@ -412,7 +436,7 @@ app.put(
 
       res.json({
         message: "Profile updated successfully",
-        practitioner: updatedPractitioner.rows[0],
+        practitioner: updatedPractitioner[0],
       });
     } catch (error) {
       console.error("Update practitioner profile error:", error);
@@ -437,7 +461,7 @@ app.get("/api/appointments", authenticateToken, async (req, res) => {
         JOIN users p ON pt.user_id = p.user_id
         JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
         JOIN users pr ON prac.user_id = pr.user_id
-        WHERE pt.user_id = $1
+        WHERE pt.user_id = ?
         ORDER BY a.appointment_date DESC, a.start_time DESC
       `;
       params = [req.user.userId];
@@ -451,7 +475,7 @@ app.get("/api/appointments", authenticateToken, async (req, res) => {
         JOIN users p ON pt.user_id = p.user_id
         JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
         JOIN users pr ON prac.user_id = pr.user_id
-        WHERE prac.user_id = $1
+        WHERE prac.user_id = ?
         ORDER BY a.appointment_date DESC, a.start_time DESC
       `;
       params = [req.user.userId];
@@ -469,8 +493,9 @@ app.get("/api/appointments", authenticateToken, async (req, res) => {
       `;
     }
 
-    const appointments = await pool.query(query, params);
-    res.json(appointments.rows);
+    const [appointments] = await pool.execute(query, params);
+    console.log('Appointments query result:', appointments);
+    res.json(appointments);
   } catch (error) {
     console.error("Get appointments error:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -491,30 +516,25 @@ app.post("/api/appointments", authenticateToken, async (req, res) => {
     } = req.body;
 
     // Get patient ID from user ID
-    const patient = await pool.query(
-      "SELECT patient_id FROM patients WHERE user_id = $1",
+    const [patient] = await pool.execute(
+      "SELECT patient_id FROM patients WHERE user_id = ?",
       [req.user.userId]
     );
-    if (patient.rows.length === 0) {
+    if (patient.length === 0) {
       return res.status(400).json({ error: "Patient profile not found" });
     }
 
     const appointmentId = uuidv4();
-    const confirmationCode = Math.random()
-      .toString(36)
-      .substring(2, 10)
-      .toUpperCase();
 
-    const newAppointment = await pool.query(
+    await pool.execute(
       `INSERT INTO appointments (
         appointment_id, patient_id, practitioner_id, appointment_date, start_time, end_time,
         service_type, consultation_type, special_instructions, preparation_notes,
         confirmation_code
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-      RETURNING *`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         appointmentId,
-        patient.rows[0].patient_id,
+        patient[0].patient_id,
         practitionerId,
         appointmentDate,
         startTime,
@@ -523,13 +543,18 @@ app.post("/api/appointments", authenticateToken, async (req, res) => {
         consultationType,
         specialInstructions,
         preparationNotes,
-        confirmationCode,
+        Math.random().toString(36).substring(2, 10).toUpperCase(),
       ]
+    );
+
+    const [newAppointment] = await pool.execute(
+      `SELECT * FROM appointments WHERE appointment_id = ?`,
+      [appointmentId]
     );
 
     res.status(201).json({
       message: "Appointment booked successfully",
-      appointment: newAppointment.rows[0],
+      appointment: newAppointment[0],
     });
   } catch (error) {
     console.error("Create appointment error:", error);
@@ -552,7 +577,7 @@ app.get("/api/treatment-plans", authenticateToken, async (req, res) => {
         JOIN users p ON pt.user_id = p.user_id
         JOIN practitioners prac ON tp.practitioner_id = prac.practitioner_id
         JOIN users pr ON prac.user_id = pr.user_id
-        WHERE pt.user_id = $1
+        WHERE pt.user_id = ?
         ORDER BY tp.created_at DESC
       `;
       params = [req.user.userId];
@@ -565,7 +590,7 @@ app.get("/api/treatment-plans", authenticateToken, async (req, res) => {
         JOIN users p ON pt.user_id = p.user_id
         JOIN practitioners prac ON tp.practitioner_id = prac.practitioner_id
         JOIN users pr ON prac.user_id = pr.user_id
-        WHERE prac.user_id = $1
+        WHERE prac.user_id = ?
         ORDER BY tp.created_at DESC
       `;
       params = [req.user.userId];
@@ -582,8 +607,8 @@ app.get("/api/treatment-plans", authenticateToken, async (req, res) => {
       `;
     }
 
-    const treatmentPlans = await pool.query(query, params);
-    res.json(treatmentPlans.rows);
+    const [treatmentPlans] = await pool.execute(query, params);
+    res.json(treatmentPlans);
   } catch (error) {
     console.error("Get treatment plans error:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -613,14 +638,13 @@ app.post(
       } = req.body;
 
       const treatmentPlanId = uuidv4();
-      const newTreatmentPlan = await pool.query(
+      await pool.execute(
         `INSERT INTO treatment_plans (
         treatment_plan_id, patient_id, practitioner_id, treatment_name, treatment_type,
         start_date, end_date, total_sessions, purvakarma_protocols, pradhanakarma_protocols,
         paschatkarma_protocols, contraindications, expected_outcomes, special_instructions,
         total_cost
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      RETURNING *`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           treatmentPlanId,
           patientId,
@@ -640,9 +664,14 @@ app.post(
         ]
       );
 
+      const [newTreatmentPlan] = await pool.execute(
+        `SELECT * FROM treatment_plans WHERE treatment_plan_id = ?`,
+        [treatmentPlanId]
+      );
+
       res.status(201).json({
         message: "Treatment plan created successfully",
-        treatmentPlan: newTreatmentPlan.rows[0],
+        treatmentPlan: newTreatmentPlan[0],
       });
     } catch (error) {
       console.error("Create treatment plan error:", error);
@@ -863,6 +892,102 @@ app.post(
     });
   }
 );
+
+// Slots Management Routes
+
+// Generate slots for a practitioner
+app.post("/api/slots/generate/:practitionerId", authenticateToken, authorizeRoles("admin", "practitioner"), async (req, res) => {
+  try {
+    const { practitionerId } = req.params;
+    const { regenerate } = req.body;
+
+    // Import the slot generator
+    const { generatePractitionerSlots } = require('./slotGenerator');
+
+    await generatePractitionerSlots(practitionerId, regenerate || false, pool);
+
+    res.json({ message: "Slots generated successfully" });
+  } catch (error) {
+    console.error("Generate slots error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get slots for a practitioner by day and status
+app.get("/api/slots/:practitionerId", authenticateToken, async (req, res) => {
+  try {
+    const { practitionerId } = req.params;
+    const { day, status } = req.query;
+
+    let query = "SELECT * FROM slots WHERE practitioner_id = ?";
+    let params = [practitionerId];
+
+    if (day) {
+      query += " AND day = ?";
+      params.push(day.toLowerCase());
+    }
+
+    if (status) {
+      query += " AND status = ?";
+      params.push(status);
+    }
+
+    query += " ORDER BY day, start_time";
+
+    let [slots] = await pool.execute(query, params);
+
+    // If no slots found for the specific day, try to auto-generate them
+    if (slots.length === 0 && day) {
+      try {
+        const { generatePractitionerSlots } = require('./slotGenerator');
+        await generatePractitionerSlots(practitionerId, false, pool);
+
+        // Re-query after generation
+        [slots] = await pool.execute(query, params);
+      } catch (genError) {
+        console.error('Error auto-generating slots:', genError);
+        // Continue with empty slots if generation fails
+      }
+    }
+
+    res.json(slots);
+  } catch (error) {
+    console.error("Get slots error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Update slot status
+app.put("/api/slots/:slotId", authenticateToken, async (req, res) => {
+  try {
+    const { slotId } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ["booked", "free", "leave"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    const [result] = await pool.execute(
+      "UPDATE slots SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE slot_id = ?",
+      [status, slotId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Slot not found" });
+    }
+
+    const [updatedSlot] = await pool.execute("SELECT * FROM slots WHERE slot_id = ?", [slotId]);
+
+    res.json({
+      message: "Slot updated successfully",
+      slot: updatedSlot[0]
+    });
+  } catch (error) {
+    console.error("Update slot error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 // Health check route
 app.get("/api/health", (req, res) => {

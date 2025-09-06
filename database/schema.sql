@@ -280,6 +280,21 @@ CREATE TABLE rooms (
     FOREIGN KEY (last_updated_by) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
+-- Slots Table for Doctor Schedule Management
+CREATE TABLE slots (
+    slot_id VARCHAR(36) PRIMARY KEY,
+    practitioner_id VARCHAR(36) NOT NULL,
+    day VARCHAR(20) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    status ENUM('booked', 'free', 'leave') DEFAULT 'free',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id) ON DELETE CASCADE,
+    INDEX idx_practitioner_day (practitioner_id, day),
+    INDEX idx_status (status)
+);
+
 -- Indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_phone ON users(phone);
