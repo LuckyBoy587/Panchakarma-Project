@@ -111,6 +111,16 @@ const Navbar = () => {
               </Link>
             )}
 
+            {user.userType === 'staff' && (
+              <Link
+                to="/staff-dashboard"
+                className="flex items-center space-x-1 text-gray-600 hover:text-blue-600"
+              >
+                <Settings size={18} />
+                <span>Staff Dashboard</span>
+              </Link>
+            )}
+
             <button
               onClick={handleLogout}
               className="flex items-center space-x-1 text-gray-600 hover:text-red-600"
@@ -182,6 +192,17 @@ const Navbar = () => {
                 >
                   <Settings size={18} />
                   <span>Admin</span>
+                </Link>
+              )}
+
+              {user.userType === 'staff' && (
+                <Link
+                  to="/staff-dashboard"
+                  className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 px-2 py-1 mobile-menu-link"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Settings size={18} />
+                  <span>Staff Dashboard</span>
                 </Link>
               )}
 

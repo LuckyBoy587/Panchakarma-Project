@@ -133,6 +133,7 @@ const Register = () => {
               >
                 <option value="patient">Patient</option>
                 <option value="practitioner">Practitioner</option>
+                <option value="staff">Staff</option>
               </select>
             </div>
 
