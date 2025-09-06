@@ -96,7 +96,7 @@ const authorizeRoles = (...roles) => {
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { email, phone, password, firstName, lastName, userType } = req.body;
-
+    console.log("Registering user:", email, phone, userType);
     // Check if user already exists
     const [existingUser] = await pool.execute(
       'SELECT * FROM users WHERE email = ? OR phone = ?',
