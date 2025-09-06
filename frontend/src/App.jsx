@@ -13,6 +13,7 @@ import PractitionerProfile from './pages/PractitionerProfile';
 import Appointments from './pages/Appointments';
 import TreatmentPlans from './pages/TreatmentPlans';
 import AdminPanel from './pages/AdminPanel';
+import StaffDashboard from './pages/StaffDashboard';
 
 // Context
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -91,6 +92,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminPanel />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/staff-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['staff', 'admin']}>
+                    <StaffDashboard />
                   </ProtectedRoute>
                 }
               />

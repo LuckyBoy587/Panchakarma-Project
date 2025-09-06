@@ -257,6 +257,29 @@ CREATE TABLE user_preferences (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
+-- Stock Table
+CREATE TABLE stock (
+    id VARCHAR(36) PRIMARY KEY,
+    item_name VARCHAR(200) NOT NULL,
+    quantity INT NOT NULL DEFAULT 0,
+    unit VARCHAR(50) NOT NULL,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by VARCHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (updated_by) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- Rooms Table
+CREATE TABLE rooms (
+    id VARCHAR(36) PRIMARY KEY,
+    room_name VARCHAR(100) NOT NULL,
+    status ENUM('available', 'occupied', 'maintenance') DEFAULT 'available',
+    last_updated_by VARCHAR(36) NOT NULL,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (last_updated_by) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
 -- Indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_phone ON users(phone);
@@ -270,18 +293,40 @@ CREATE INDEX idx_treatment_plans_practitioner_id ON treatment_plans(practitioner
 CREATE INDEX idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX idx_feedback_patient_id ON feedback(patient_id);
 CREATE INDEX idx_billing_patient_id ON billing(patient_id);
+CREATE INDEX idx_stock_updated_by ON stock(updated_by);
+CREATE INDEX idx_rooms_last_updated_by ON rooms(last_updated_by);
 
 -- Sample data insertion
 INSERT INTO users (user_id, email, phone, password_hash, user_type, first_name, last_name, email_verified, phone_verified) VALUES
-('admin-001', 'admin@panchakarma.com', '+1234567890', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPjYQmLx9TQK', 'admin', 'System', 'Admin', true, true),
-('prac-001', 'dr.meera@panchakarma.com', '+1234567891', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPjYQmLx9TQK', 'practitioner', 'Dr. Meera', 'Nair', true, true),
-('pat-001', 'arjun.sharma@email.com', '+1234567892', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPjYQmLx9TQK', 'patient', 'Arjun', 'Sharma', true, true);
+('admin-001', 'admin@panchakarma.com', '+1234567890', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'admin', 'System', 'Admin', true, true),
+('prac-001', 'dr.meera@panchakarma.com', '+1234567891', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'Dr. Meera', 'Nair', true, true),
+('pat-001', 'arjun.sharma@email.com', '+1234567892', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'patient', 'Arjun', 'Sharma', true, true);
 
 INSERT INTO practitioners (practitioner_id, user_id, license_number, qualification, specializations, experience_years, languages_spoken, consultation_fee, clinic_affiliation, practice_start_date, verification_status, working_hours, consultation_duration, max_patients_per_day) VALUES
 ('prac-profile-001', 'prac-001', 'AYU-KL-12345', 'BAMS, MD Panchakarma', '["Panchakarma", "Ayurveda"]', 12, '["English", "Malayalam", "Hindi"]', 1500.00, 'Holistic Wellness Center', '2012-06-01', 'verified', '{"monday": {"start": "09:00", "end": "17:00", "isWorking": true}, "tuesday": {"start": "09:00", "end": "17:00", "isWorking": true}, "wednesday": {"start": "09:00", "end": "17:00", "isWorking": true}, "thursday": {"start": "09:00", "end": "17:00", "isWorking": true}, "friday": {"start": "09:00", "end": "17:00", "isWorking": true}, "saturday": {"start": "09:00", "end": "13:00", "isWorking": true}, "sunday": {"isWorking": false}}', 45, 16);
 
 INSERT INTO patients (patient_id, user_id, date_of_birth, gender, blood_group, height_cm, weight_kg, occupation, marital_status, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, medical_conditions, allergies, current_medications, dosha_dominance) VALUES
 ('pat-profile-001', 'pat-001', '1985-07-15', 'male', 'O+', 175, 78.5, 'Software Engineer', 'married', 'Priya Sharma', '+1234567893', 'Spouse', 'Hypertension, Chronic stress', 'Pollen, Dust mites', 'Amlodipine 5mg daily', 'Pitta');
+
+-- Sample staff user
+INSERT INTO users (user_id, email, phone, password_hash, user_type, first_name, last_name, email_verified, phone_verified) VALUES
+('staff-001', 'staff@panchakarma.com', '+1234567894', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'staff', 'Rajesh', 'Kumar', true, true);
+
+-- Sample stock data
+INSERT INTO stock (id, item_name, quantity, unit, updated_by) VALUES
+('stock-001', 'Medicated Oil - Dhanwantharam', 25, 'bottles', 'staff-001'),
+('stock-002', 'Triphala Powder', 50, 'kg', 'staff-001'),
+('stock-003', 'Ghee (Clarified Butter)', 30, 'kg', 'staff-001'),
+('stock-004', 'Honey', 20, 'kg', 'staff-001'),
+('stock-005', 'Herbal Tea Bags', 100, 'packets', 'staff-001');
+
+-- Sample rooms data
+INSERT INTO rooms (id, room_name, status, last_updated_by) VALUES
+('room-001', 'Treatment Room 1', 'available', 'staff-001'),
+('room-002', 'Treatment Room 2', 'available', 'staff-001'),
+('room-003', 'Consultation Room', 'available', 'staff-001'),
+('room-004', 'Massage Room', 'maintenance', 'staff-001'),
+('room-005', 'Steam Room', 'available', 'staff-001');
 
 -- Create uploads directory (this would be handled by the application)
 -- The application should create this directory if it doesn't exist

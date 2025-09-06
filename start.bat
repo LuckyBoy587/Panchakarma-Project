@@ -23,7 +23,7 @@ start cmd /k "cd ../backend && npm run dev"
 
 echo.
 echo Starting frontend development server...
-start cmd /k "cd ../frontend && npm run dev"
+start cmd /k "cd ../frontend && npm run dev -- --host"
 
 echo.
 echo Both servers are starting...
@@ -31,3 +31,4 @@ echo Backend: http://localhost:5000
 echo Frontend: http://localhost:3000
 echo.
 
+cd ..
