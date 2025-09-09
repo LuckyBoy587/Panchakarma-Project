@@ -110,28 +110,24 @@ CREATE TABLE appointments (
 );
 
 -- Treatment Plans Table
+-- Treatment Plans Table
 CREATE TABLE treatment_plans (
     treatment_plan_id VARCHAR(36) PRIMARY KEY,
     patient_id VARCHAR(36) NOT NULL,
     practitioner_id VARCHAR(36) NOT NULL,
+    therapy_id INT NOT NULL,
     treatment_name VARCHAR(200) NOT NULL,
-    treatment_type ENUM('panchakarma', 'consultation', 'therapy') NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     total_sessions INT NOT NULL,
     sessions_completed INT DEFAULT 0,
-    purvakarma_protocols JSON NULL,
-    pradhanakarma_protocols JSON NULL,
-    paschatkarma_protocols JSON NULL,
-    contraindications TEXT NULL,
-    expected_outcomes TEXT NULL,
-    special_instructions TEXT NULL,
     status ENUM('planned', 'active', 'completed', 'paused', 'cancelled') DEFAULT 'planned',
     total_cost DECIMAL(10,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
-    FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id)
+    FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id),
+    FOREIGN KEY (therapy_id) REFERENCES therapies(id)
 );
 
 -- Treatment Sessions Table
@@ -333,6 +329,8 @@ CREATE INDEX idx_appointments_practitioner_id ON appointments(practitioner_id);
 CREATE INDEX idx_appointments_date ON appointments(appointment_date);
 CREATE INDEX idx_treatment_plans_patient_id ON treatment_plans(patient_id);
 CREATE INDEX idx_treatment_plans_practitioner_id ON treatment_plans(practitioner_id);
+CREATE INDEX idx_treatment_plans_therapy_id ON treatment_plans(therapy_id);
+CREATE INDEX idx_treatment_plans_status ON treatment_plans(status);
 CREATE INDEX idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX idx_feedback_patient_id ON feedback(patient_id);
 CREATE INDEX idx_billing_patient_id ON billing(patient_id);

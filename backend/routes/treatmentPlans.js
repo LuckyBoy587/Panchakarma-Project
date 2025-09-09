@@ -67,43 +67,29 @@ router.post("/", authenticateToken, authorizeRoles("practitioner", "admin"), asy
 
     const {
       patientId,
+      therapyId,
       treatmentName,
-      treatmentType,
       startDate,
       endDate,
       totalSessions,
-      purvakarmaProtocols,
-      pradhanakarmaProtocols,
-      paschatkarmaProtocols,
-      contraindications,
-      expectedOutcomes,
-      specialInstructions,
       totalCost,
     } = req.body;
 
     const treatmentPlanId = uuidv4();
     await pool.execute(
       `INSERT INTO treatment_plans (
-        treatment_plan_id, patient_id, practitioner_id, treatment_name, treatment_type,
-        start_date, end_date, total_sessions, purvakarma_protocols, pradhanakarma_protocols,
-        paschatkarma_protocols, contraindications, expected_outcomes, special_instructions,
-        total_cost
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        treatment_plan_id, patient_id, practitioner_id, therapy_id, treatment_name,
+        start_date, end_date, total_sessions, total_cost
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         treatmentPlanId,
         patientId,
         req.user.userId,
+        therapyId,
         treatmentName,
-        treatmentType,
         startDate,
         endDate,
         totalSessions,
-        JSON.stringify(purvakarmaProtocols),
-        JSON.stringify(pradhanakarmaProtocols),
-        JSON.stringify(paschatkarmaProtocols),
-        contraindications,
-        JSON.stringify(expectedOutcomes),
-        specialInstructions,
         totalCost,
       ]
     );
