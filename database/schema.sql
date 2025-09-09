@@ -271,6 +271,32 @@ CREATE TABLE stock (
     FOREIGN KEY (updated_by) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
+-- Stock Items Table (Master data from JSON)
+CREATE TABLE stock_items (
+    id INT PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    unit VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Therapies Table (Master data from JSON)
+CREATE TABLE therapies (
+    id INT PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Therapy Required Items Table (Junction table for therapies and stock items)
+CREATE TABLE therapy_required_items (
+    therapy_id INT NOT NULL,
+    stock_id INT NOT NULL,
+    quantity INT NOT NULL,
+    PRIMARY KEY (therapy_id, stock_id),
+    FOREIGN KEY (therapy_id) REFERENCES therapies(id) ON DELETE CASCADE,
+    FOREIGN KEY (stock_id) REFERENCES stock_items(id) ON DELETE CASCADE
+);
+
 -- Rooms Table
 CREATE TABLE rooms (
     id VARCHAR(36) PRIMARY KEY,
@@ -312,6 +338,10 @@ CREATE INDEX idx_feedback_patient_id ON feedback(patient_id);
 CREATE INDEX idx_billing_patient_id ON billing(patient_id);
 CREATE INDEX idx_stock_updated_by ON stock(updated_by);
 CREATE INDEX idx_rooms_last_updated_by ON rooms(last_updated_by);
+CREATE INDEX idx_stock_items_category ON stock_items(category);
+CREATE INDEX idx_therapies_name ON therapies(name);
+CREATE INDEX idx_therapy_required_items_therapy_id ON therapy_required_items(therapy_id);
+CREATE INDEX idx_therapy_required_items_stock_id ON therapy_required_items(stock_id);
 
 -- Sample data insertion
 INSERT INTO users (user_id, email, phone, password_hash, user_type, first_name, last_name, email_verified, phone_verified) VALUES
@@ -338,6 +368,95 @@ INSERT INTO rooms (id, room_name, status, last_updated_by) VALUES
 ('room-003', 'Consultation Room', 'available', 'staff-001'),
 ('room-004', 'Massage Room', 'maintenance', 'staff-001'),
 ('room-005', 'Steam Room', 'available', 'staff-001');
+
+-- Sample stock items data
+INSERT INTO stock_items (id, name, category, unit) VALUES
+(1, 'Sesame Oil', 'Oil', 'ml'),
+(2, 'Coconut Oil', 'Oil', 'ml'),
+(3, 'Castor Oil', 'Oil', 'ml'),
+(4, 'Ghee', 'Consumable', 'g'),
+(5, 'Medicated Powder', 'Powder', 'g'),
+(6, 'Medicated Paste', 'Paste', 'g'),
+(7, 'Herbal Decoction', 'Decoction', 'ml'),
+(8, 'Buttermilk', 'Consumable', 'ml'),
+(9, 'Milk', 'Consumable', 'ml'),
+(10, 'Honey', 'Consumable', 'ml'),
+(11, 'Lemon Juice', 'Consumable', 'ml'),
+(12, 'Therapy Bed', 'Equipment', 'piece'),
+(13, 'Shirodhara Pot', 'Equipment', 'piece'),
+(14, 'Steam Chamber', 'Equipment', 'piece'),
+(15, 'Massage Table', 'Equipment', 'piece'),
+(16, 'Towels', 'Reusable', 'piece'),
+(17, 'Cotton', 'Consumable', 'g'),
+(18, 'Cloth Strips', 'Reusable', 'piece'),
+(19, 'Blanket', 'Reusable', 'piece'),
+(20, 'Earthen Pot', 'Equipment', 'piece'),
+(21, 'Copper Vessel', 'Equipment', 'piece'),
+(22, 'Mortar and Pestle', 'Equipment', 'piece'),
+(23, 'Oil Heating Pan', 'Equipment', 'piece'),
+(24, 'Colonic Equipment', 'Equipment', 'set'),
+(25, 'Neti Pot', 'Equipment', 'piece'),
+(26, 'Eye Cup', 'Equipment', 'piece'),
+(27, 'Medicated Rice', 'Consumable', 'g'),
+(28, 'Herbal Leaves', 'Consumable', 'g'),
+(29, 'Herbal Poultice (Pinda)', 'Consumable', 'piece'),
+(30, 'Incense Sticks', 'Misc', 'piece');
+
+-- Sample therapies data
+INSERT INTO therapies (id, name) VALUES
+(1, 'Abhyanga (Oil Massage)'),
+(2, 'Shirodhara'),
+(3, 'Swedana (Herbal Steam)'),
+(4, 'Nasya (Nasal Therapy)'),
+(5, 'Virechana (Purgation)'),
+(6, 'Basti (Enema Therapy)'),
+(7, 'Netra Tarpana (Eye Therapy)'),
+(8, 'Pinda Sweda (Rice Bolus Massage)'),
+(9, 'Udvartana (Powder Massage)'),
+(10, 'Karna Purana (Ear Therapy)');
+
+-- Sample therapy required items data
+INSERT INTO therapy_required_items (therapy_id, stock_id, quantity) VALUES
+-- Abhyanga (Oil Massage)
+(1, 1, 200),
+(1, 16, 2),
+(1, 12, 1),
+-- Shirodhara
+(2, 1, 500),
+(2, 13, 1),
+(2, 12, 1),
+-- Swedana (Herbal Steam)
+(3, 14, 1),
+(3, 7, 300),
+(3, 16, 2),
+-- Nasya (Nasal Therapy)
+(4, 2, 20),
+(4, 25, 1),
+(4, 16, 1),
+-- Virechana (Purgation)
+(5, 3, 50),
+(5, 11, 20),
+(5, 16, 1),
+-- Basti (Enema Therapy)
+(6, 24, 1),
+(6, 7, 200),
+(6, 16, 1),
+-- Netra Tarpana (Eye Therapy)
+(7, 4, 50),
+(7, 26, 1),
+(7, 16, 1),
+-- Pinda Sweda (Rice Bolus Massage)
+(8, 27, 200),
+(8, 28, 100),
+(8, 29, 2),
+(8, 16, 2),
+-- Udvartana (Powder Massage)
+(9, 5, 100),
+(9, 12, 1),
+(9, 16, 2),
+-- Karna Purana (Ear Therapy)
+(10, 1, 20),
+(10, 16, 1);
 
 -- Create uploads directory (this would be handled by the application)
 -- The application should create this directory if it doesn't exist
