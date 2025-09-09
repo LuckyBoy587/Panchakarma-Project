@@ -271,6 +271,16 @@ CREATE TABLE stock (
     FOREIGN KEY (updated_by) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
+-- Stock Items Table (Master list of available items)
+CREATE TABLE stock_items (
+    id INT PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    unit VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- Rooms Table
 CREATE TABLE rooms (
     id VARCHAR(36) PRIMARY KEY,
@@ -338,6 +348,39 @@ INSERT INTO rooms (id, room_name, status, last_updated_by) VALUES
 ('room-003', 'Consultation Room', 'available', 'staff-001'),
 ('room-004', 'Massage Room', 'maintenance', 'staff-001'),
 ('room-005', 'Steam Room', 'available', 'staff-001');
+
+-- Sample stock items data
+INSERT INTO stock_items (id, name, category, unit) VALUES
+(1, 'Sesame Oil', 'Oil', 'ml'),
+(2, 'Coconut Oil', 'Oil', 'ml'),
+(3, 'Castor Oil', 'Oil', 'ml'),
+(4, 'Ghee', 'Consumable', 'g'),
+(5, 'Medicated Powder', 'Powder', 'g'),
+(6, 'Medicated Paste', 'Paste', 'g'),
+(7, 'Herbal Decoction', 'Decoction', 'ml'),
+(8, 'Buttermilk', 'Consumable', 'ml'),
+(9, 'Milk', 'Consumable', 'ml'),
+(10, 'Honey', 'Consumable', 'ml'),
+(11, 'Lemon Juice', 'Consumable', 'ml'),
+(12, 'Therapy Bed', 'Equipment', 'piece'),
+(13, 'Shirodhara Pot', 'Equipment', 'piece'),
+(14, 'Steam Chamber', 'Equipment', 'piece'),
+(15, 'Massage Table', 'Equipment', 'piece'),
+(16, 'Towels', 'Reusable', 'piece'),
+(17, 'Cotton', 'Consumable', 'g'),
+(18, 'Cloth Strips', 'Reusable', 'piece'),
+(19, 'Blanket', 'Reusable', 'piece'),
+(20, 'Earthen Pot', 'Equipment', 'piece'),
+(21, 'Copper Vessel', 'Equipment', 'piece'),
+(22, 'Mortar and Pestle', 'Equipment', 'piece'),
+(23, 'Oil Heating Pan', 'Equipment', 'piece'),
+(24, 'Colonic Equipment', 'Equipment', 'set'),
+(25, 'Neti Pot', 'Equipment', 'piece'),
+(26, 'Eye Cup', 'Equipment', 'piece'),
+(27, 'Medicated Rice', 'Consumable', 'g'),
+(28, 'Herbal Leaves', 'Consumable', 'g'),
+(29, 'Herbal Poultice (Pinda)', 'Consumable', 'piece'),
+(30, 'Incense Sticks', 'Misc', 'piece');
 
 -- Create uploads directory (this would be handled by the application)
 -- The application should create this directory if it doesn't exist

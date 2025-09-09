@@ -121,6 +121,22 @@ router.delete("/stock/:id", authenticateToken, authorizeRoles("staff", "admin"),
   }
 });
 
+// Get all available stock items (master list)
+router.get("/stock-items", authenticateToken, authorizeRoles("staff", "admin"), async (req, res) => {
+  try {
+    const pool = getPool();
+
+    const [stockItems] = await pool.execute(`
+      SELECT * FROM stock_items
+      ORDER BY category, name
+    `);
+    res.json(stockItems);
+  } catch (error) {
+    console.error("Get stock items error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Get all rooms
 router.get("/rooms", authenticateToken, authorizeRoles("staff", "admin"), async (req, res) => {
   try {
