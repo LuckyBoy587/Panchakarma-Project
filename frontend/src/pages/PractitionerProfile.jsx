@@ -66,7 +66,7 @@ const PractitionerProfile = () => {
     try {
       const response = await axios.post(`/api/slots/busy/${pracId}`);
       const busySlotsData = response.data;
-      
+
       // Convert busy slots to calendar events
       const busyEvents = busySlotsData.map(slot => ({
         id: `busy-${slot.slot_id}`,
@@ -76,7 +76,7 @@ const PractitionerProfile = () => {
         type: 'busy-slot',
         resource: slot
       }));
-      
+
       setBusySlots(busyEvents);
       console.log('Fetched busy slots:', busySlotsData.length);
     } catch (error) {
@@ -92,10 +92,10 @@ const PractitionerProfile = () => {
       const profile = profileResponse.data;
       console.log('Fetched profile:', profile);
       console.log('Working hours data:', profile.working_hours);
-      
+
       // Set practitioner ID
       setPractitionerId(profile.practitioner_id);
-      
+
       if (profile.working_hours) {
         setWorkingDays(profile.working_hours);
       }
@@ -115,16 +115,23 @@ const PractitionerProfile = () => {
       const appointmentsData = appointmentsResponse.data;
 
       // Convert appointments to calendar events format
-      const calendarEvents = appointmentsData.map(appointment => ({
-        id: appointment.appointment_id,
-        title: `${appointment.patient_first_name} ${appointment.patient_last_name} - ${appointment.treatment_type || 'Appointment'}`,
-        start: new Date(`${appointment.appointment_date}T${appointment.start_time}`),
-        end: new Date(`${appointment.appointment_date}T${appointment.end_time}`),
-        resource: appointment,
-        type: 'appointment'
-      }));
+      const calendarEvents = appointmentsData.map(appointment => {
+        const dateOnly = appointment.appointment_date.split("T")[0]; // "2025-09-10"
+        const start = new Date(`${dateOnly}T${appointment.start_time}`);
+        const end = new Date(`${dateOnly}T${appointment.end_time}`);
+
+        return {
+          id: appointment.appointment_id,
+          title: `${appointment.patient_first_name} ${appointment.patient_last_name} - ${appointment.service_type || 'Appointment'}`,
+          start,
+          end,
+          resource: appointment,
+          type: 'appointment'
+        };
+      });
 
       setAppointments(calendarEvents);
+      console.log('Fetched appointments:', calendarEvents);
 
       // Generate working hours events
       try {
@@ -169,7 +176,7 @@ const PractitionerProfile = () => {
       for (let week = 0; week < 4; week++) {
         const eventDate = new Date(today);
         const dayIndex = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].indexOf(dayName.toLowerCase());
-        
+
         if (dayIndex !== -1) {
           const daysToAdd = ((dayIndex - today.getDay() + 7) % 7) + (week * 7);
           eventDate.setDate(today.getDate() + daysToAdd);
@@ -293,7 +300,7 @@ const PractitionerProfile = () => {
       for (let week = 0; week < 4; week++) {
         const eventDate = new Date(today);
         const dayIndex = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].indexOf(dayName.toLowerCase());
-        
+
         if (dayIndex !== -1) {
           const daysToAdd = ((dayIndex - today.getDay() + 7) % 7) + (week * 7);
           eventDate.setDate(today.getDate() + daysToAdd);
