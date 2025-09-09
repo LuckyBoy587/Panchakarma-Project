@@ -146,4 +146,21 @@ router.put("/profile", authenticateToken, authorizeRoles("practitioner"), async 
   }
 });
 
+router.get("/leave-days", authenticateToken, authorizeRoles("practitioner"), async (req, res) => {
+  try {
+    const pool = getPool();
+    const [rows] = await pool.execute(
+      `SELECT leave_days FROM practitioners WHERE user_id = ?`,
+      [req.user.userId]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Practitioner not found" });
+    }
+    res.json({ leaveDays: rows[0].leave_days || [] });
+  } catch (error) {
+    console.error("Get leave days error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;

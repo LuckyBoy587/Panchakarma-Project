@@ -87,7 +87,7 @@ router.post("/login", async (req, res) => {
       process.env.JWT_SECRET || "your-secret-key",
       { expiresIn: "24h" }
     );
-
+    console.log("Token generated for user:", token);
     res.json({
       message: "Login successful",
       token,

@@ -36,7 +36,126 @@ code {
   @apply block text-sm font-medium text-gray-700 mb-2;
 }
 
-/* Mobile Responsive Styles */
+/* React Big Calendar Custom Styles */
+.rbc-calendar {
+  font-family: inherit;
+}
+
+.rbc-header {
+  background-color: #f8fafc;
+  color: #374151;
+  font-weight: 600;
+  padding: 8px 6px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.rbc-today {
+  background-color: #eff6ff;
+}
+
+.rbc-event {
+  border-radius: 4px;
+  border: none;
+  color: white;
+  font-size: 12px;
+  padding: 2px 6px;
+}
+
+.rbc-event.rbc-selected {
+  outline: 2px solid #2563eb;
+}
+
+.rbc-slot-selection {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.rbc-toolbar {
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 0;
+}
+
+.rbc-toolbar button {
+  color: #374151;
+  border: 1px solid #d1d5db;
+  background-color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.rbc-toolbar button:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.rbc-toolbar button.rbc-active {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.rbc-toolbar-label {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 20px;
+}
+
+.rbc-month-view {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.rbc-month-row {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.rbc-day-bg {
+  border-right: 1px solid #f3f4f6;
+}
+
+.rbc-date-cell {
+  padding: 4px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.rbc-off-range-bg {
+  background-color: #f9fafb;
+}
+
+.rbc-off-range {
+  color: #9ca3af;
+}
+
+/* Working Hours Event Styles */
+.working-hours-event {
+  background-color: #10B981 !important;
+  opacity: 0.3 !important;
+  border: 1px solid #10B981 !important;
+  color: #065F46 !important;
+}
+
+.working-hours-event:hover {
+  opacity: 0.5 !important;
+}
+
+/* Appointment Event Styles */
+.appointment-event {
+  background-color: #3B82F6 !important;
+  opacity: 0.9 !important;
+  border: none !important;
+  color: white !important;
+}
+
+.appointment-event:hover {
+  opacity: 1 !important;
+}
 @media (max-width: 768px) {
   /* Navbar adjustments */
   .navbar-links {
