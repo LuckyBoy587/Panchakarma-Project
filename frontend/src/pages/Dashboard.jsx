@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { Navigate } from 'react-router-dom';
 import axios from 'axios';
 import { Calendar, Users, FileText, TrendingUp } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
+
+  // Redirect staff users to staff dashboard
+  if (user && user.userType === 'staff') {
+    return <Navigate to="/staff-dashboard" replace />;
+  }
+
   const [stats, setStats] = useState({
     appointments: 0,
     treatmentPlans: 0,

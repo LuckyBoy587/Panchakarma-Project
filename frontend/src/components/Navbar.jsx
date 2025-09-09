@@ -65,21 +65,25 @@ const Navbar = () => {
               <span>Dashboard</span>
             </Link>
 
-            <Link
-              to="/appointments"
-              className="flex items-center space-x-1 text-gray-600 hover:text-blue-600"
-            >
-              <Calendar size={18} />
-              <span>Appointments</span>
-            </Link>
+            {user.userType !== 'staff' && (
+              <>
+                <Link
+                  to="/appointments"
+                  className="flex items-center space-x-1 text-gray-600 hover:text-blue-600"
+                >
+                  <Calendar size={18} />
+                  <span>Appointments</span>
+                </Link>
 
-            <Link
-              to="/treatment-plans"
-              className="flex items-center space-x-1 text-gray-600 hover:text-blue-600"
-            >
-              <FileText size={18} />
-              <span>Treatments</span>
-            </Link>
+                <Link
+                  to="/treatment-plans"
+                  className="flex items-center space-x-1 text-gray-600 hover:text-blue-600"
+                >
+                  <FileText size={18} />
+                  <span>Treatments</span>
+                </Link>
+              </>
+            )}
 
             {user.userType === 'patient' && (
               <Link
@@ -111,16 +115,6 @@ const Navbar = () => {
               </Link>
             )}
 
-            {user.userType === 'staff' && (
-              <Link
-                to="/staff-dashboard"
-                className="flex items-center space-x-1 text-gray-600 hover:text-blue-600"
-              >
-                <Settings size={18} />
-                <span>Staff Dashboard</span>
-              </Link>
-            )}
-
             <button
               onClick={handleLogout}
               className="flex items-center space-x-1 text-gray-600 hover:text-red-600"
@@ -144,23 +138,27 @@ const Navbar = () => {
                 <span>Dashboard</span>
               </Link>
 
-              <Link
-                to="/appointments"
-                className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 px-2 py-1 mobile-menu-link"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <Calendar size={18} />
-                <span>Appointments</span>
-              </Link>
+              {user.userType !== 'staff' && (
+                <>
+                  <Link
+                    to="/appointments"
+                    className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 px-2 py-1 mobile-menu-link"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Calendar size={18} />
+                    <span>Appointments</span>
+                  </Link>
 
-              <Link
-                to="/treatment-plans"
-                className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 px-2 py-1 mobile-menu-link"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <FileText size={18} />
-                <span>Treatments</span>
-              </Link>
+                  <Link
+                    to="/treatment-plans"
+                    className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 px-2 py-1 mobile-menu-link"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <FileText size={18} />
+                    <span>Treatments</span>
+                  </Link>
+                </>
+              )}
 
               {user.userType === 'patient' && (
                 <Link
