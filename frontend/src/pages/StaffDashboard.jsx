@@ -44,9 +44,8 @@ const StaffDashboard = () => {
 
   const loadAvailableItems = async () => {
     try {
-      const response = await fetch('/data/stock-items.json');
-      const data = await response.json();
-      setAvailableItems(data);
+      const response = await axios.get('/api/staff/stock-items');
+      setAvailableItems(response.data);
     } catch (error) {
       console.error('Error loading available items:', error);
     }
