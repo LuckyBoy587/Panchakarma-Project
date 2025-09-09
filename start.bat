@@ -16,14 +16,13 @@ if not exist node_modules (
     echo Installing frontend dependencies...
     npm install
 )
-
 echo.
 echo Starting backend server...
-start cmd /k "cd ../backend && npm run dev"
+start cmd /k "npx kill-port 5000 && cd ../backend && npm run dev"
 
 echo.
 echo Starting frontend development server...
-start cmd /k "cd ../frontend && npm run dev -- --host"
+start cmd /k "npx kill-port 3000 && cd ../frontend && npm run dev -- --host"
 
 echo.
 echo Both servers are starting...

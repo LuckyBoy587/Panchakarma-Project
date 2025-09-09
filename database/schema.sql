@@ -70,7 +70,9 @@ CREATE TABLE practitioners (
     bio TEXT NULL,
     verification_status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
     verification_documents JSON NULL,
-    working_hours JSON NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    leave_days JSON NULL,
     consultation_duration INT DEFAULT 30,
     max_patients_per_day INT DEFAULT 20,
     emergency_availability BOOLEAN DEFAULT false,
@@ -280,6 +282,21 @@ CREATE TABLE rooms (
     FOREIGN KEY (last_updated_by) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
+-- Slots Table for Doctor Schedule Management
+CREATE TABLE slots (
+    slot_id VARCHAR(36) PRIMARY KEY,
+    practitioner_id VARCHAR(36) NOT NULL,
+    date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    status ENUM('booked', 'free', 'leave') DEFAULT 'free',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id) ON DELETE CASCADE,
+    INDEX idx_practitioner_date (practitioner_id, date),
+    INDEX idx_status (status)
+);
+
 -- Indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_phone ON users(phone);
@@ -298,12 +315,14 @@ CREATE INDEX idx_rooms_last_updated_by ON rooms(last_updated_by);
 
 -- Sample data insertion
 INSERT INTO users (user_id, email, phone, password_hash, user_type, first_name, last_name, email_verified, phone_verified) VALUES
-('admin-001', 'admin@panchakarma.com', '+1234567890', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'admin', 'System', 'Admin', true, true),
-('prac-001', 'dr.meera@panchakarma.com', '+1234567891', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'Dr. Meera', 'Nair', true, true),
+('admin-001', 'admin@panchakarma.com', '+1234567890', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'System', 'Admin', true, true),
+('prac-001', 'doctor@panchakarma.com', '+1234567891', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'Dr. Meera', 'Nair', true, true),
+('prac-002', 'doctor2@panchakarma.com', '+1234567895', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'Dr. Ravi', 'Sharma', true, true),
 ('pat-001', 'arjun.sharma@email.com', '+1234567892', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'patient', 'Arjun', 'Sharma', true, true);
 
-INSERT INTO practitioners (practitioner_id, user_id, license_number, qualification, specializations, experience_years, languages_spoken, consultation_fee, clinic_affiliation, practice_start_date, verification_status, working_hours, consultation_duration, max_patients_per_day) VALUES
-('prac-profile-001', 'prac-001', 'AYU-KL-12345', 'BAMS, MD Panchakarma', '["Panchakarma", "Ayurveda"]', 12, '["English", "Malayalam", "Hindi"]', 1500.00, 'Holistic Wellness Center', '2012-06-01', 'verified', '{"monday": {"start": "09:00", "end": "17:00", "isWorking": true}, "tuesday": {"start": "09:00", "end": "17:00", "isWorking": true}, "wednesday": {"start": "09:00", "end": "17:00", "isWorking": true}, "thursday": {"start": "09:00", "end": "17:00", "isWorking": true}, "friday": {"start": "09:00", "end": "17:00", "isWorking": true}, "saturday": {"start": "09:00", "end": "13:00", "isWorking": true}, "sunday": {"isWorking": false}}', 45, 16);
+INSERT INTO practitioners (practitioner_id, user_id, license_number, qualification, specializations, experience_years, languages_spoken, consultation_fee, clinic_affiliation, practice_start_date, verification_status, start_time, end_time, leave_days, consultation_duration, max_patients_per_day) VALUES
+('prac-profile-001', 'prac-001', 'AYU-KL-12345', 'BAMS, MD Panchakarma', '["Panchakarma", "Ayurveda"]', 12, '["English", "Malayalam", "Hindi"]', 1500.00, 'Holistic Wellness Center', '2012-06-01', 'verified', '09:00', '17:00', '["sunday"]', 45, 16),
+('prac-profile-002', 'prac-002', 'AYU-KL-67890', 'BAMS, MD Ayurveda', '["Ayurveda", "Yoga Therapy"]', 8, '["English", "Hindi"]', 1200.00, 'Ayurvedic Healing Clinic', '2016-03-15', 'verified', '10:00', '16:00', '["sunday"]', 30, 12);
 
 INSERT INTO patients (patient_id, user_id, date_of_birth, gender, blood_group, height_cm, weight_kg, occupation, marital_status, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, medical_conditions, allergies, current_medications, dosha_dominance) VALUES
 ('pat-profile-001', 'pat-001', '1985-07-15', 'male', 'O+', 175, 78.5, 'Software Engineer', 'married', 'Priya Sharma', '+1234567893', 'Spouse', 'Hypertension, Chronic stress', 'Pollen, Dust mites', 'Amlodipine 5mg daily', 'Pitta');
