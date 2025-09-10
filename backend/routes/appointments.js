@@ -17,12 +17,16 @@ router.get("/", authenticateToken, async (req, res) => {
       // Get patient's appointments
       query = `
         SELECT a.*, p.first_name as patient_first_name, p.last_name as patient_last_name,
-               pr.first_name as practitioner_first_name, pr.last_name as practitioner_last_name
+               COALESCE(pr.first_name, tr.first_name) as provider_first_name,
+               COALESCE(pr.last_name, tr.last_name) as provider_last_name,
+               CASE WHEN a.practitioner_id IS NOT NULL THEN 'practitioner' ELSE 'therapist' END as provider_type
         FROM appointments a
         JOIN patients pt ON a.patient_id = pt.patient_id
         JOIN users p ON pt.user_id = p.user_id
-        JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
-        JOIN users pr ON prac.user_id = pr.user_id
+        LEFT JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
+        LEFT JOIN users pr ON prac.user_id = pr.user_id
+        LEFT JOIN therapists ther ON a.therapist_id = ther.therapist_id
+        LEFT JOIN users tr ON ther.user_id = tr.user_id
         WHERE pt.user_id = ?
         ORDER BY a.appointment_date DESC, a.start_time DESC
       `;
@@ -41,16 +45,34 @@ router.get("/", authenticateToken, async (req, res) => {
         ORDER BY a.appointment_date DESC, a.start_time DESC
       `;
       params = [req.user.userId];
+    } else if (req.user.role === "therapist") {
+      // Get therapist's appointments
+      query = `
+        SELECT a.*, p.first_name as patient_first_name, p.last_name as patient_last_name,
+               tr.first_name as therapist_first_name, tr.last_name as therapist_last_name
+        FROM appointments a
+        JOIN patients pt ON a.patient_id = pt.patient_id
+        JOIN users p ON pt.user_id = p.user_id
+        JOIN therapists ther ON a.therapist_id = ther.therapist_id
+        JOIN users tr ON ther.user_id = tr.user_id
+        WHERE ther.user_id = ?
+        ORDER BY a.appointment_date DESC, a.start_time DESC
+      `;
+      params = [req.user.userId];
     } else {
       // Admin gets all appointments
       query = `
         SELECT a.*, p.first_name as patient_first_name, p.last_name as patient_last_name,
-               pr.first_name as practitioner_first_name, pr.last_name as practitioner_last_name
+               COALESCE(pr.first_name, tr.first_name) as provider_first_name,
+               COALESCE(pr.last_name, tr.last_name) as provider_last_name,
+               CASE WHEN a.practitioner_id IS NOT NULL THEN 'practitioner' ELSE 'therapist' END as provider_type
         FROM appointments a
         JOIN patients pt ON a.patient_id = pt.patient_id
         JOIN users p ON pt.user_id = p.user_id
-        JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
-        JOIN users pr ON prac.user_id = pr.user_id
+        LEFT JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
+        LEFT JOIN users pr ON prac.user_id = pr.user_id
+        LEFT JOIN therapists ther ON a.therapist_id = ther.therapist_id
+        LEFT JOIN users tr ON ther.user_id = tr.user_id
         ORDER BY a.appointment_date DESC, a.start_time DESC
       `;
     }
@@ -70,6 +92,7 @@ router.post("/", authenticateToken, async (req, res) => {
 
     const {
       practitionerId,
+      therapistId,
       appointmentDate,
       startTime,
       endTime,
@@ -92,14 +115,15 @@ router.post("/", authenticateToken, async (req, res) => {
 
     await pool.execute(
       `INSERT INTO appointments (
-        appointment_id, patient_id, practitioner_id, appointment_date, start_time, end_time,
+        appointment_id, patient_id, practitioner_id, therapist_id, appointment_date, start_time, end_time,
         service_type, consultation_type, special_instructions, preparation_notes,
         booking_channel, confirmation_code
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         appointmentId,
         patient[0].patient_id,
-        practitionerId,
+        practitionerId || null,
+        therapistId || null,
         appointmentDate,
         startTime,
         endTime,

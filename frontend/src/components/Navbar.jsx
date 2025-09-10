@@ -75,7 +75,7 @@ const Navbar = () => {
               </Link>
             )}
 
-            {(user.userType === 'patient' || user.userType === 'practitioner') && (
+            {(user.userType === 'patient' || user.userType === 'practitioner' || user.userType === 'admin' || user.userType === 'staff') && (
               <Link
                 to="/treatment-plans"
                 className="flex items-center space-x-1 text-gray-600 hover:text-blue-600"
@@ -98,6 +98,16 @@ const Navbar = () => {
             {user.userType === 'practitioner' && (
               <Link
                 to="/practitioner-profile"
+                className="flex items-center space-x-1 text-gray-600 hover:text-blue-600"
+              >
+                <Settings size={18} />
+                <span>Profile</span>
+              </Link>
+            )}
+
+            {user.userType === 'therapist' && (
+              <Link
+                to="/therapist-profile"
                 className="flex items-center space-x-1 text-gray-600 hover:text-blue-600"
               >
                 <Settings size={18} />
@@ -149,7 +159,7 @@ const Navbar = () => {
                 </Link>
               )}
 
-              {(user.userType === 'patient' || user.userType === 'practitioner') && (
+              {(user.userType === 'patient' || user.userType === 'practitioner' || user.userType === 'admin' || user.userType === 'staff') && (
                 <Link
                   to="/treatment-plans"
                   className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 px-2 py-1 mobile-menu-link"
@@ -174,6 +184,17 @@ const Navbar = () => {
               {user.userType === 'practitioner' && (
                 <Link
                   to="/practitioner-profile"
+                  className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 px-2 py-1 mobile-menu-link"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Settings size={18} />
+                  <span>Profile</span>
+                </Link>
+              )}
+
+              {user.userType === 'therapist' && (
+                <Link
+                  to="/therapist-profile"
                   className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 px-2 py-1 mobile-menu-link"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >

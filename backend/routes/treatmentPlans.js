@@ -6,7 +6,7 @@ const { authenticateToken, authorizeRoles } = require("../middleware/auth");
 const router = express.Router();
 
 // Get treatment plans
-router.get("/", authenticateToken, async (req, res) => {
+router.get("/", authenticateToken, authorizeRoles("patient", "practitioner", "admin", "staff"), async (req, res) => {
   try {
     const pool = getPool();
 

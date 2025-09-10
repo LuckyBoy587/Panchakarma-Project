@@ -10,6 +10,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import PatientProfile from './pages/PatientProfile';
 import PractitionerProfile from './pages/PractitionerProfile';
+import TherapistProfile from './pages/TherapistProfile';
 import Appointments from './pages/Appointments';
 import TreatmentPlans from './pages/TreatmentPlans';
 import AdminPanel from './pages/AdminPanel';
@@ -72,6 +73,14 @@ function App() {
                 }
               />
               <Route
+                path="/therapist-profile"
+                element={
+                  <ProtectedRoute allowedRoles={['therapist', 'admin']}>
+                    <TherapistProfile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/appointments"
                 element={
                   <ProtectedRoute>
@@ -82,7 +91,7 @@ function App() {
               <Route
                 path="/treatment-plans"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowedRoles={['patient', 'practitioner', 'admin', 'staff']}>
                     <TreatmentPlans />
                   </ProtectedRoute>
                 }

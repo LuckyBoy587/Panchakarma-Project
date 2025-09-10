@@ -33,9 +33,17 @@ const Dashboard = () => {
       const appointmentsResponse = await axios.get('/api/appointments');
       const appointments = appointmentsResponse.data;
 
-      // Fetch treatment plans
-      const treatmentPlansResponse = await axios.get('/api/treatment-plans');
-      const treatmentPlans = treatmentPlansResponse.data;
+      // Fetch treatment plans (only for non-therapist users)
+      let treatmentPlans = [];
+      if (user.userType !== 'therapist') {
+        try {
+          const treatmentPlansResponse = await axios.get('/api/treatment-plans');
+          treatmentPlans = treatmentPlansResponse.data;
+        } catch (error) {
+          console.error('Error fetching treatment plans:', error);
+          // Treatment plans access denied for therapists, which is expected
+        }
+      }
 
       // Set stats based on user role
       if (user.userType === 'patient') {
@@ -51,6 +59,15 @@ const Dashboard = () => {
         setStats({
           appointments: appointments.length,
           treatmentPlans: treatmentPlans.length,
+          patients: uniquePatients,
+          practitioners: 0,
+        });
+      } else if (user.userType === 'therapist') {
+        // For therapists, count their patients and appointments (but no treatment plans)
+        const uniquePatients = new Set(appointments.map(app => app.patient_id)).size;
+        setStats({
+          appointments: appointments.length,
+          treatmentPlans: 0, // Therapists don't see treatment plans
           patients: uniquePatients,
           practitioners: 0,
         });

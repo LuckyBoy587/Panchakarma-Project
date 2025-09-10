@@ -4,16 +4,16 @@ const { authenticateToken, authorizeRoles } = require("../middleware/auth");
 
 const router = express.Router();
 
-// Get slots for a practitioner by day and status
-router.get("/:practitionerId", authenticateToken, async (req, res) => {
+// Get slots for a practitioner or therapist by day and status
+router.get("/:providerId", authenticateToken, async (req, res) => {
   try {
     const pool = getPool();
 
-    const { practitionerId } = req.params;
+    const { providerId } = req.params;
     const { day, status } = req.query;
 
-    let query = "SELECT * FROM slots WHERE practitioner_id = ?";
-    let params = [practitionerId];
+    let query = "SELECT * FROM slots WHERE practitioner_id = ? OR therapist_id = ?";
+    let params = [providerId, providerId];
 
     if (day) {
       query += " AND date = ?";
@@ -142,20 +142,19 @@ router.post("/available", authenticateToken, async (req, res) => {
   }
 });
 
-router.post("/busy/:practitionerId", authenticateToken, async (req, res) => {
+router.post("/busy/:providerId", authenticateToken, async (req, res) => {
   try {
     const pool = getPool();
-    const { practitionerId } = req.params;
+    const { providerId } = req.params;
     
     const query = `
-      select * from slots s
-      natural join practitioners p
-      WHERE p.practitioner_id = ?
-      AND s.status in ('booked', 'leave')
+      SELECT * FROM slots s
+      WHERE (s.practitioner_id = ? OR s.therapist_id = ?)
+      AND s.status IN ('booked', 'leave')
     `;
-    const [busySlots] = await pool.execute(query, [practitionerId]);
+    const [busySlots] = await pool.execute(query, [providerId, providerId]);
     res.json(busySlots);
-    console.log(`Busy slots for practitioner ${practitionerId}:`, busySlots.length);
+    console.log(`Busy slots for provider ${providerId}:`, busySlots.length);
   } catch (error) {
     console.error("Get busy slots error:", error);
     res.status(500).json({ error: "Internal server error" });

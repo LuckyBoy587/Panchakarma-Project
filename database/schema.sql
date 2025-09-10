@@ -11,7 +11,7 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     phone VARCHAR(20) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    user_type ENUM('patient', 'practitioner', 'admin', 'staff') NOT NULL,
+    user_type ENUM('patient', 'practitioner', 'therapist', 'admin', 'staff') NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     is_active BOOLEAN DEFAULT true,
@@ -81,11 +81,38 @@ CREATE TABLE practitioners (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
+-- Therapists Table
+CREATE TABLE therapists (
+    therapist_id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL,
+    license_number VARCHAR(100) UNIQUE NOT NULL,
+    qualification VARCHAR(500) NOT NULL,
+    specializations JSON NOT NULL,
+    experience_years INT NOT NULL,
+    languages_spoken JSON NOT NULL,
+    consultation_fee DECIMAL(10,2) NOT NULL,
+    clinic_affiliation VARCHAR(200) NULL,
+    practice_start_date DATE NOT NULL,
+    bio TEXT NULL,
+    verification_status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
+    verification_documents JSON NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    leave_days JSON NULL,
+    consultation_duration INT DEFAULT 30,
+    max_patients_per_day INT DEFAULT 20,
+    emergency_availability BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
 -- Appointments Table
 CREATE TABLE appointments (
     appointment_id VARCHAR(36) PRIMARY KEY,
     patient_id VARCHAR(36) NOT NULL,
-    practitioner_id VARCHAR(36) NOT NULL,
+    practitioner_id VARCHAR(36) NULL,
+    therapist_id VARCHAR(36) NULL,
     appointment_date DATE NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
@@ -106,14 +133,16 @@ CREATE TABLE appointments (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
-    FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id)
+    FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id),
+    FOREIGN KEY (therapist_id) REFERENCES therapists(therapist_id)
 );
 
 -- Treatment Plans Table
 CREATE TABLE treatment_plans (
     treatment_plan_id VARCHAR(36) PRIMARY KEY,
     patient_id VARCHAR(36) NOT NULL,
-    practitioner_id VARCHAR(36) NOT NULL,
+    practitioner_id VARCHAR(36) NULL,
+    therapist_id VARCHAR(36) NULL,
     treatment_name VARCHAR(200) NOT NULL,
     treatment_type ENUM('panchakarma', 'consultation', 'therapy') NOT NULL,
     start_date DATE NOT NULL,
@@ -131,7 +160,8 @@ CREATE TABLE treatment_plans (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
-    FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id)
+    FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id),
+    FOREIGN KEY (therapist_id) REFERENCES therapists(therapist_id)
 );
 
 -- Treatment Sessions Table
@@ -314,7 +344,8 @@ CREATE TABLE rooms (
 -- Slots Table for Doctor Schedule Management
 CREATE TABLE slots (
     slot_id VARCHAR(36) PRIMARY KEY,
-    practitioner_id VARCHAR(36) NOT NULL,
+    practitioner_id VARCHAR(36) NULL,
+    therapist_id VARCHAR(36) NULL,
     date DATE NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
@@ -322,7 +353,8 @@ CREATE TABLE slots (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id) ON DELETE CASCADE,
-    INDEX idx_practitioner_date (practitioner_id, date),
+    FOREIGN KEY (therapist_id) REFERENCES therapists(therapist_id) ON DELETE CASCADE,
+    INDEX idx_provider_date (practitioner_id, therapist_id, date),
     INDEX idx_status (status)
 );
 
@@ -333,9 +365,11 @@ CREATE INDEX idx_patients_user_id ON patients(user_id);
 CREATE INDEX idx_practitioners_user_id ON practitioners(user_id);
 CREATE INDEX idx_appointments_patient_id ON appointments(patient_id);
 CREATE INDEX idx_appointments_practitioner_id ON appointments(practitioner_id);
+CREATE INDEX idx_appointments_therapist_id ON appointments(therapist_id);
 CREATE INDEX idx_appointments_date ON appointments(appointment_date);
 CREATE INDEX idx_treatment_plans_patient_id ON treatment_plans(patient_id);
 CREATE INDEX idx_treatment_plans_practitioner_id ON treatment_plans(practitioner_id);
+CREATE INDEX idx_treatment_plans_therapist_id ON treatment_plans(therapist_id);
 CREATE INDEX idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX idx_feedback_patient_id ON feedback(patient_id);
 CREATE INDEX idx_billing_patient_id ON billing(patient_id);
@@ -349,11 +383,15 @@ INSERT INTO users (user_id, email, phone, password_hash, user_type, first_name, 
 ('admin-001', 'admin@panchakarma.com', '+1234567890', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'System', 'Admin', true, true),
 ('prac-001', 'doctor@panchakarma.com', '+1234567891', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'Dr. Meera', 'Nair', true, true),
 ('prac-002', 'doctor2@panchakarma.com', '+1234567895', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'Dr. Ravi', 'Sharma', true, true),
+('ther-001', 'therapist@panchakarma.com', '+1234567896', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'therapist', 'Priya', 'Patel', true, true),
 ('pat-001', 'arjun.sharma@email.com', '+1234567892', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'patient', 'Arjun', 'Sharma', true, true);
 
 INSERT INTO practitioners (practitioner_id, user_id, license_number, qualification, specializations, experience_years, languages_spoken, consultation_fee, clinic_affiliation, practice_start_date, verification_status, start_time, end_time, leave_days, consultation_duration, max_patients_per_day) VALUES
 ('prac-profile-001', 'prac-001', 'AYU-KL-12345', 'BAMS, MD Panchakarma', '["Panchakarma", "Ayurveda"]', 12, '["English", "Malayalam", "Hindi"]', 1500.00, 'Holistic Wellness Center', '2012-06-01', 'verified', '09:00', '17:00', '["sunday"]', 45, 16),
 ('prac-profile-002', 'prac-002', 'AYU-KL-67890', 'BAMS, MD Ayurveda', '["Ayurveda", "Yoga Therapy"]', 8, '["English", "Hindi"]', 1200.00, 'Ayurvedic Healing Clinic', '2016-03-15', 'verified', '10:00', '16:00', '["sunday"]', 30, 12);
+
+INSERT INTO therapists (therapist_id, user_id, license_number, qualification, specializations, experience_years, languages_spoken, consultation_fee, clinic_affiliation, practice_start_date, verification_status, start_time, end_time, leave_days, consultation_duration, max_patients_per_day) VALUES
+('ther-profile-001', 'ther-001', 'TH-KL-12345', 'Certified Ayurvedic Therapist', '["Massage", "Yoga Therapy"]', 5, '["English", "Hindi"]', 800.00, 'Holistic Wellness Center', '2019-01-15', 'verified', '08:00', '16:00', '["sunday"]', 60, 8);
 
 INSERT INTO patients (patient_id, user_id, date_of_birth, gender, blood_group, height_cm, weight_kg, occupation, marital_status, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, medical_conditions, allergies, current_medications, dosha_dominance) VALUES
 ('pat-profile-001', 'pat-001', '1985-07-15', 'male', 'O+', 175, 78.5, 'Software Engineer', 'married', 'Priya Sharma', '+1234567893', 'Spouse', 'Hypertension, Chronic stress', 'Pollen, Dust mites', 'Amlodipine 5mg daily', 'Pitta');
