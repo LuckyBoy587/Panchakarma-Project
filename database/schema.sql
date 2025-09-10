@@ -281,6 +281,25 @@ CREATE TABLE stock_items (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- Therapies Table
+CREATE TABLE therapies (
+    id INT PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Therapy Required Items Table
+CREATE TABLE therapy_required_items (
+    therapy_id INT NOT NULL,
+    stock_id INT NOT NULL,
+    quantity INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (therapy_id, stock_id),
+    FOREIGN KEY (therapy_id) REFERENCES therapies(id) ON DELETE CASCADE,
+    FOREIGN KEY (stock_id) REFERENCES stock_items(id) ON DELETE CASCADE
+);
+
 -- Rooms Table
 CREATE TABLE rooms (
     id VARCHAR(36) PRIMARY KEY,
@@ -322,6 +341,8 @@ CREATE INDEX idx_feedback_patient_id ON feedback(patient_id);
 CREATE INDEX idx_billing_patient_id ON billing(patient_id);
 CREATE INDEX idx_stock_updated_by ON stock(updated_by);
 CREATE INDEX idx_rooms_last_updated_by ON rooms(last_updated_by);
+CREATE INDEX idx_therapy_required_items_therapy_id ON therapy_required_items(therapy_id);
+CREATE INDEX idx_therapy_required_items_stock_id ON therapy_required_items(stock_id);
 
 -- Sample data insertion
 INSERT INTO users (user_id, email, phone, password_hash, user_type, first_name, last_name, email_verified, phone_verified) VALUES
@@ -381,6 +402,52 @@ INSERT INTO stock_items (id, name, category, unit) VALUES
 (28, 'Herbal Leaves', 'Consumable', 'g'),
 (29, 'Herbal Poultice (Pinda)', 'Consumable', 'piece'),
 (30, 'Incense Sticks', 'Misc', 'piece');
+
+-- Sample therapies data
+INSERT INTO therapies (id, name) VALUES
+(1, 'Abhyanga (Oil Massage)'),
+(2, 'Shirodhara'),
+(3, 'Swedana (Herbal Steam)'),
+(4, 'Nasya (Nasal Therapy)'),
+(5, 'Virechana (Purgation)'),
+(6, 'Basti (Enema Therapy)'),
+(7, 'Netra Tarpana (Eye Therapy)'),
+(8, 'Pinda Sweda (Rice Bolus Massage)'),
+(9, 'Udvartana (Powder Massage)'),
+(10, 'Karna Purana (Ear Therapy)');
+
+-- Sample therapy required items data
+INSERT INTO therapy_required_items (therapy_id, stock_id, quantity) VALUES
+(1, 1, 200),
+(1, 16, 2),
+(1, 12, 1),
+(2, 1, 500),
+(2, 13, 1),
+(2, 12, 1),
+(3, 14, 1),
+(3, 7, 300),
+(3, 16, 2),
+(4, 2, 20),
+(4, 25, 1),
+(4, 16, 1),
+(5, 3, 50),
+(5, 11, 20),
+(5, 16, 1),
+(6, 24, 1),
+(6, 7, 200),
+(6, 16, 1),
+(7, 4, 50),
+(7, 26, 1),
+(7, 16, 1),
+(8, 27, 200),
+(8, 28, 100),
+(8, 29, 2),
+(8, 16, 2),
+(9, 5, 100),
+(9, 12, 1),
+(9, 16, 2),
+(10, 1, 20),
+(10, 16, 1);
 
 -- Create uploads directory (this would be handled by the application)
 -- The application should create this directory if it doesn't exist
