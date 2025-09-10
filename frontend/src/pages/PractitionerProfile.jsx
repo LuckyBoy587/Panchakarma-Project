@@ -22,8 +22,8 @@ const PractitionerProfile = () => {
   const [workingHoursEvents, setWorkingHoursEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [workingDuration, setWorkingDuration] = useState({
-    start: new Date().setHours(9, 0, 0, 0),
-    end: new Date().setHours(17, 0, 0, 0)
+    start: new Date(),
+    end: new Date()
   });
 
   const [busySlots, setBusySlots] = useState([]);
@@ -66,7 +66,7 @@ const PractitionerProfile = () => {
     try {
       const response = await axios.post(`/api/slots/busy/${pracId}`);
       const busySlotsData = response.data;
-      
+
       // Convert busy slots to calendar events
       const busyEvents = busySlotsData.map(slot => ({
         id: `busy-${slot.slot_id}`,
@@ -76,7 +76,7 @@ const PractitionerProfile = () => {
         type: 'busy-slot',
         resource: slot
       }));
-      
+
       setBusySlots(busyEvents);
       console.log('Fetched busy slots:', busySlotsData.length);
     } catch (error) {
@@ -92,10 +92,10 @@ const PractitionerProfile = () => {
       const profile = profileResponse.data;
       console.log('Fetched profile:', profile);
       console.log('Working hours data:', profile.working_hours);
-      
+
       // Set practitioner ID
       setPractitionerId(profile.practitioner_id);
-      
+
       if (profile.working_hours) {
         setWorkingDays(profile.working_hours);
       }
@@ -113,22 +113,24 @@ const PractitionerProfile = () => {
       // Fetch appointments
       const appointmentsResponse = await axios.get('/api/appointments');
       const appointmentsData = appointmentsResponse.data;
-
       // Convert appointments to calendar events format
-      const calendarEvents = appointmentsData.map(appointment => ({
-        id: appointment.appointment_id,
-        title: `${appointment.patient_first_name} ${appointment.patient_last_name} - ${appointment.treatment_type || 'Appointment'}`,
-        start: new Date(`${appointment.appointment_date}T${appointment.start_time}`),
-        end: new Date(`${appointment.appointment_date}T${appointment.end_time}`),
-        resource: appointment,
-        type: 'appointment'
-      }));
+      const calendarEvents = appointmentsData.map(appointment => {
+        const dateStr = appointment.appointment_date.split('T')[0];
+        return {
+          id: appointment.appointment_id,
+          title: `${appointment.patient_first_name} ${appointment.patient_last_name} - ${appointment.treatment_type || 'Appointment'}`,
+          start: new Date(`${dateStr}T${appointment.start_time}`),
+          end: new Date(`${dateStr}T${appointment.end_time}`),
+          resource: appointment,
+          type: 'appointment'
+        }
+      });
 
       setAppointments(calendarEvents);
 
       // Generate working hours events
       try {
-        generateWorkingHoursEvents(busySlots, appointments, leaveDays);
+        generateWorkingHoursEvents(busySlots, calendarEvents, leaveDays);
       } catch (error) {
         console.error('Error generating working hours events:', error);
         // Still try to generate with default data
@@ -155,12 +157,17 @@ const PractitionerProfile = () => {
 
     // Convert appointments to busy slot format
     const appointmentSlots = appointmentsData.map(appointment => ({
-      date: appointment.appointment_date,
-      start_time: appointment.start_time,
-      end_time: appointment.end_time,
+      date: appointment.resource.appointment_date.split('T')[0],
+      start_time: appointment.resource.start_time,
+      end_time: appointment.resource.end_time,
       slot_id: `appointment-${appointment.appointment_id}`,
       status: 'booked'
     }));
+
+    console.log("Appointment slots:", appointmentSlots);
+    appointmentsData.forEach(slot => {
+      console.log(`Appointment - Date: ${slot.resource.appointment_date}, Start: ${slot.resource.start_time}, End: ${slot.resource.end_time}`);
+    });
 
     // Convert leave days to busy slot format (full day leave for each occurrence of the day)
     const leaveSlots = [];
@@ -169,7 +176,7 @@ const PractitionerProfile = () => {
       for (let week = 0; week < 4; week++) {
         const eventDate = new Date(today);
         const dayIndex = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].indexOf(dayName.toLowerCase());
-        
+
         if (dayIndex !== -1) {
           const daysToAdd = ((dayIndex - today.getDay() + 7) % 7) + (week * 7);
           eventDate.setDate(today.getDate() + daysToAdd);
@@ -293,7 +300,7 @@ const PractitionerProfile = () => {
       for (let week = 0; week < 4; week++) {
         const eventDate = new Date(today);
         const dayIndex = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].indexOf(dayName.toLowerCase());
-        
+
         if (dayIndex !== -1) {
           const daysToAdd = ((dayIndex - today.getDay() + 7) % 7) + (week * 7);
           eventDate.setDate(today.getDate() + daysToAdd);
