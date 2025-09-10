@@ -225,7 +225,7 @@ const TreatmentPlans = () => {
               {patients.map((patient) => (
                 <div
                   key={patient.patient_id}
-                  className="group bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-blue-200 transition-all duration-200 hover:-translate-y-1"
+                  className="group bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-blue-200 transition-all duration-200"
                 >
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between">
                     <div className="flex-1">
