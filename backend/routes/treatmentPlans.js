@@ -53,6 +53,7 @@ router.get("/", authenticateToken, async (req, res) => {
     }
 
     const [treatmentPlans] = await pool.execute(query, params);
+    console.log("Treatment Plans:", treatmentPlans);
     res.json(treatmentPlans);
   } catch (error) {
     console.error("Get treatment plans error:", error);
