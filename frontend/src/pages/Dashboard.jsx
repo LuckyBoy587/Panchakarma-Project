@@ -119,6 +119,7 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8">
+      {console.log('Appointments:', recentAppointments)}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">
           Welcome back, {user.firstName}!
@@ -216,7 +217,7 @@ const Dashboard = () => {
                     <div>
                       <p className="text-sm font-medium text-gray-900">
                         {user.userType === 'patient'
-                          ? `${appointment.practitioner_first_name} ${appointment.practitioner_last_name}`
+                          ? `${appointment.provider_first_name} ${appointment.provider_last_name}`
                           : `${appointment.patient_first_name} ${appointment.patient_last_name}`
                         }
                       </p>

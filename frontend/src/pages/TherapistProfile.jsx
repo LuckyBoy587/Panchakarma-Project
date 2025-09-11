@@ -8,6 +8,14 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 // Setup the localizer for react-big-calendar
 const localizer = momentLocalizer(moment);
 
+// Helper function to format date as YYYY-MM-DD without timezone conversion
+const formatDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const TherapistProfile = () => {
   const [workingDays, setWorkingDays] = useState([
     { day: 'Monday', isWorking: false, startTime: '09:00', endTime: '17:00' },
@@ -86,8 +94,10 @@ const TherapistProfile = () => {
       console.log('First session structure:', sessionsData[0]); // Debug log
       // Convert treatment sessions to calendar events format
       const calendarEvents = sessionsData.map(session => {
-        // Handle both date formats (with or without time)
-        const dateStr = session.appointment_date.split('T')[0];
+        // Parse the date string properly (assuming YYYY-MM-DD format from backend)
+        const currDate = new Date(session.appointment_date);
+        currDate.setDate(currDate.getDate() + 1);
+        const dateStr = currDate.toISOString().split('T')[0]; // Get date part if it includes time
         const startTime = session.start_time || '09:00:00'; // fallback if no start_time
         const endTime = session.end_time || '10:00:00'; // fallback if no end_time
         
@@ -163,7 +173,7 @@ const TherapistProfile = () => {
               start: new Date(eventDate.setHours(0, 0, 0, 0)),
               end: new Date(eventDate.setHours(23, 59, 59, 999)),
               type: 'leave-day',
-              resource: { day: dayName, date: eventDate.toISOString().split('T')[0] }
+              resource: { day: dayName, date: formatDate(eventDate) }
             });
           }
         }
@@ -211,7 +221,7 @@ const TherapistProfile = () => {
 
           // Only generate for future dates or today
           if (eventDate >= new Date(today.toDateString())) {
-            const dateString = eventDate.toISOString().split('T')[0];
+            const dateString = formatDate(eventDate);
             leaveSlots.push({
               date: dateString,
               start_time: '00:00:00',

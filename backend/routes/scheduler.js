@@ -25,6 +25,14 @@ function generateTimeSlots(startTime, endTime, intervalMinutes) {
   return slots;
 }
 
+// Helper function to format date as YYYY-MM-DD without timezone conversion
+function formatDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // POST /api/scheduler - Create treatment plan and schedule sessions
 router.post(
   "/",
@@ -140,9 +148,7 @@ router.post(
 
       // Create treatment plan first to get the treatmentPlanId
       const treatmentPlanId = uuidv4();
-      const endDate = sessionDates[sessionDates.length - 1]
-        .toISOString()
-        .split("T")[0];
+      const endDate = formatDate(sessionDates[sessionDates.length - 1]);
 
       await pool.execute(
         `INSERT INTO treatment_plans (
@@ -168,7 +174,7 @@ router.post(
 
       for (let sessionIndex = 0; sessionIndex < sessionDates.length; sessionIndex++) {
         const sessionDate = sessionDates[sessionIndex];
-        const dateStr = sessionDate.toISOString().split('T')[0];
+        const dateStr = formatDate(sessionDate);
         const dayName = sessionDate.toLocaleDateString('en-US', { weekday: 'long' });
         console.log(`Scheduling session ${sessionIndex + 1} on ${dateStr} (${dayName})`);
 
