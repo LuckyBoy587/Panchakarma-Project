@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
 import axios from 'axios';
-import { Calendar, Users, FileText, TrendingUp } from 'lucide-react';
+import { Calendar, Users, FileText, TrendingUp, Clock, User, CheckCircle } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -20,6 +20,8 @@ const Dashboard = () => {
   });
   const [recentAppointments, setRecentAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [treatmentSessions, setTreatmentSessions] = useState([]);
+  const [showTreatmentModal, setShowTreatmentModal] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -42,6 +44,16 @@ const Dashboard = () => {
         } catch (error) {
           console.error('Error fetching treatment plans:', error);
           // Treatment plans access denied for therapists, which is expected
+        }
+      }
+
+      // Fetch treatment sessions for patients
+      if (user.userType === 'patient') {
+        try {
+          const sessionsResponse = await axios.get('/api/treatment-plans/sessions/patient');
+          setTreatmentSessions(sessionsResponse.data);
+        } catch (error) {
+          console.error('Error fetching treatment sessions:', error);
         }
       }
 
@@ -109,6 +121,12 @@ const Dashboard = () => {
     }
   };
 
+  const handleTreatmentClick = () => {
+    if (user.userType === 'patient') {
+      setShowTreatmentModal(true);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -143,7 +161,10 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div 
+          className={`bg-white rounded-lg shadow p-6 ${user.userType === 'patient' ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`} 
+          onClick={user.userType === 'patient' ? handleTreatmentClick : undefined}
+        >
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
               <FileText className="h-6 w-6 text-green-600" />
@@ -237,6 +258,109 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Treatment Sessions Modal */}
+      {showTreatmentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">My Treatment Sessions</h2>
+              <button
+                onClick={() => setShowTreatmentModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {treatmentSessions.length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">No treatment sessions found.</p>
+                <p className="text-gray-400 text-sm mt-2">Your treatment sessions will appear here once scheduled.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {treatmentSessions.map((session) => (
+                  <div key={session.session_id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-semibold text-lg">{session.treatment_name}</h3>
+                        <p className="text-sm text-gray-600">Session #{session.session_number}</p>
+                      </div>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(session.status)}`}>
+                        {session.status}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        <span>{new Date(session.session_date).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}</span>
+                      </div>
+                      
+                      {session.start_time && session.end_time && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Clock className="h-4 w-4 mr-2" />
+                          <span>{session.start_time} - {session.end_time}</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center text-sm text-gray-600">
+                        <User className="h-4 w-4 mr-2" />
+                        <span>Therapist: {session.therapist_first_name} {session.therapist_last_name}</span>
+                      </div>
+                      
+                      {session.practitioner_first_name && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <User className="h-4 w-4 mr-2" />
+                          <span>Practitioner: {session.practitioner_first_name} {session.practitioner_last_name}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {session.procedures_performed && (
+                      <div className="mt-4">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Procedures:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {(() => {
+                            try {
+                              const procedures = JSON.parse(session.procedures_performed);
+                              return procedures.map((procedure, index) => (
+                                <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                  {procedure}
+                                </span>
+                              ));
+                            } catch (e) {
+                              return (
+                                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                  {session.procedures_performed}
+                                </span>
+                              );
+                            }
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {session.patient_response && (
+                      <div className="mt-4">
+                        <p className="text-sm font-medium text-gray-700">Patient Response:</p>
+                        <p className="text-sm text-gray-600 mt-1">{session.patient_response}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

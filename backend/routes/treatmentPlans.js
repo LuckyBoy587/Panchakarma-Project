@@ -169,4 +169,37 @@ router.get("/sessions/therapist/:therapistId", authenticateToken, authorizeRoles
   }
 });
 
+// Get treatment sessions for a patient
+router.get("/sessions/patient", authenticateToken, authorizeRoles("patient"), async (req, res) => {
+  try {
+    const pool = getPool();
+
+    const query = `
+      SELECT 
+        ts.*,
+        tp.treatment_name,
+        tp.treatment_type,
+        t.first_name as therapist_first_name,
+        t.last_name as therapist_last_name,
+        p.first_name as practitioner_first_name,
+        p.last_name as practitioner_last_name
+      FROM treatment_sessions ts
+      JOIN treatment_plans tp ON ts.treatment_plan_id = tp.treatment_plan_id
+      JOIN patients pt ON tp.patient_id = pt.patient_id
+      JOIN therapists th ON ts.therapist_id = th.therapist_id
+      JOIN users t ON th.user_id = t.user_id
+      LEFT JOIN practitioners prac ON tp.practitioner_id = prac.practitioner_id
+      LEFT JOIN users p ON prac.user_id = p.user_id
+      WHERE pt.user_id = ?
+      ORDER BY ts.session_date, ts.start_time
+    `;
+
+    const [sessions] = await pool.execute(query, [req.user.userId]);
+    res.json(sessions);
+  } catch (error) {
+    console.error("Get patient sessions error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;

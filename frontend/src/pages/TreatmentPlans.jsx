@@ -10,6 +10,8 @@ const TreatmentPlans = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [therapies, setTherapies] = useState([]);
+  const [treatmentPlans, setTreatmentPlans] = useState([]);
+  const [treatmentSessions, setTreatmentSessions] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [formData, setFormData] = useState({
@@ -20,9 +22,27 @@ const TreatmentPlans = () => {
   });
 
   useEffect(() => {
-    fetchPatients();
-    fetchTherapies();
-  }, []);
+    if (user?.userType === 'patient') {
+      fetchPatientTreatmentSessions();
+    } else {
+      fetchPatients();
+      fetchTherapies();
+      fetchTreatmentPlans();
+    }
+  }, [user]);
+
+  const fetchPatientTreatmentSessions = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/treatment-plans/sessions/patient');
+      setTreatmentSessions(response.data);
+    } catch (error) {
+      console.error('Error fetching treatment sessions:', error);
+      setError('Failed to load treatment sessions');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchPatients = async () => {
     try {
@@ -59,6 +79,15 @@ const TreatmentPlans = () => {
       setTherapies(response.data);
     } catch (error) {
       console.error('Error fetching therapies:', error);
+    }
+  };
+
+  const fetchTreatmentPlans = async () => {
+    try {
+      const response = await axios.get('/api/treatment-plans');
+      setTreatmentPlans(response.data);
+    } catch (error) {
+      console.error('Error fetching treatment plans:', error);
     }
   };
 
@@ -123,6 +152,7 @@ const TreatmentPlans = () => {
         setFormData({ therapyId: '', startDate: '', numSessions: '', frequency: '' });
         // Refresh patients list to show updated data
         fetchPatients();
+        fetchTreatmentPlans();
       })
       .catch((error) => {
         console.error('Error assigning treatment plan:', error);
@@ -171,6 +201,128 @@ const TreatmentPlans = () => {
     );
   }
 
+  if (user?.userType === 'patient') {
+    // Patient View - Show their treatment sessions
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">My Treatment Sessions</h1>
+          <p className="text-gray-600 mt-2">View your scheduled treatment sessions</p>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <p className="text-red-600">{error}</p>
+          </div>
+        ) : treatmentSessions.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+            <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">No treatment sessions found.</p>
+            <p className="text-gray-400 text-sm mt-2">Your treatment sessions will appear here once scheduled.</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <Activity className="h-6 w-6 mr-3 text-blue-600" />
+                Treatment Sessions
+              </h2>
+              <p className="text-gray-600 mt-1">Your upcoming and completed treatment sessions</p>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                {treatmentSessions.map((session) => (
+                  <div key={session.session_id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">{session.treatment_name}</h3>
+                        <p className="text-sm text-gray-600">Session #{session.session_number}</p>
+                      </div>
+                      <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                        session.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {session.status}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        <span>{new Date(session.session_date).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}</span>
+                      </div>
+                      
+                      {session.start_time && session.end_time && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Clock className="h-4 w-4 mr-2" />
+                          <span>{formatTimeToIST(session.start_time)} - {formatTimeToIST(session.end_time)}</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center text-sm text-gray-600">
+                        <User className="h-4 w-4 mr-2" />
+                        <span>Therapist: {session.therapist_first_name} {session.therapist_last_name}</span>
+                      </div>
+                      
+                      {session.practitioner_first_name && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <User className="h-4 w-4 mr-2" />
+                          <span>Practitioner: {session.practitioner_first_name} {session.practitioner_last_name}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {session.procedures_performed && (
+                      <div className="mb-4">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Procedures:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {(() => {
+                            try {
+                              const procedures = JSON.parse(session.procedures_performed);
+                              return procedures.map((procedure, index) => (
+                                <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                  {procedure}
+                                </span>
+                              ));
+                            } catch (e) {
+                              return (
+                                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                  {session.procedures_performed}
+                                </span>
+                              );
+                            }
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {session.patient_response && (
+                      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700">Your Response:</p>
+                        <p className="text-sm text-gray-600 mt-1">{session.patient_response}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Practitioner/Staff/Admin View - Show patients and assign treatments
   return (
     <div className="space-y-8">
       {/* Header Section */}
@@ -288,12 +440,16 @@ const TreatmentPlans = () => {
                         </div>
                       </div>
                       <div className="mt-4">
-                        <button
-                          onClick={() => handleAssignPlan(patient)}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          Assign Treatment Plan
-                        </button>
+                        {treatmentPlans.some(plan => plan.patient_id === patient.patient_id) ? (
+                          <span className="text-green-600 font-medium">Treatment Assigned</span>
+                        ) : (
+                          <button
+                            onClick={() => handleAssignPlan(patient)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            Assign Treatment Plan
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
