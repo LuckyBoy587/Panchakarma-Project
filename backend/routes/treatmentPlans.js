@@ -202,4 +202,40 @@ router.get("/sessions/patient", authenticateToken, authorizeRoles("patient"), as
   }
 });
 
+// Get treatment sessions for a staff member
+router.get("/sessions/staff", authenticateToken, authorizeRoles("staff", "admin"), async (req, res) => {
+  try {
+    const pool = getPool();
+
+    const query = `
+      SELECT 
+        ts.*,
+        tp.treatment_name,
+        tp.treatment_type,
+        p.first_name as patient_first_name,
+        p.last_name as patient_last_name,
+        t.first_name as therapist_first_name,
+        t.last_name as therapist_last_name,
+        pr.first_name as practitioner_first_name,
+        pr.last_name as practitioner_last_name
+      FROM treatment_sessions ts
+      JOIN treatment_plans tp ON ts.treatment_plan_id = tp.treatment_plan_id
+      JOIN patients pt ON tp.patient_id = pt.patient_id
+      JOIN users p ON pt.user_id = p.user_id
+      JOIN therapists th ON ts.therapist_id = th.therapist_id
+      JOIN users t ON th.user_id = t.user_id
+      LEFT JOIN practitioners prac ON tp.practitioner_id = prac.practitioner_id
+      LEFT JOIN users pr ON prac.user_id = pr.user_id
+      WHERE ts.staff_id = ? AND ts.status IN ('scheduled', 'completed')
+      ORDER BY ts.session_date, ts.start_time
+    `;
+
+    const [sessions] = await pool.execute(query, [req.user.userId]);
+    res.json(sessions);
+  } catch (error) {
+    console.error("Get staff sessions error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;

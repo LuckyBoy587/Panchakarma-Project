@@ -24,6 +24,8 @@ const TreatmentPlans = () => {
   useEffect(() => {
     if (user?.userType === 'patient') {
       fetchPatientTreatmentSessions();
+    } else if (user?.userType === 'staff') {
+      fetchStaffTreatmentSessions();
     } else {
       fetchPatients();
       fetchTherapies();
@@ -38,6 +40,19 @@ const TreatmentPlans = () => {
       setTreatmentSessions(response.data);
     } catch (error) {
       console.error('Error fetching treatment sessions:', error);
+      setError('Failed to load treatment sessions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStaffTreatmentSessions = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/treatment-plans/sessions/staff');
+      setTreatmentSessions(response.data);
+    } catch (error) {
+      console.error('Error fetching staff treatment sessions:', error);
       setError('Failed to load treatment sessions');
     } finally {
       setLoading(false);
@@ -322,6 +337,147 @@ const TreatmentPlans = () => {
     );
   }
 
+  if (user?.userType === 'staff') {
+    // Staff View - Show their assigned treatment sessions
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">My Treatment Sessions</h1>
+          <p className="text-gray-600 mt-2">View your assigned treatment sessions</p>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <p className="text-red-600">{error}</p>
+          </div>
+        ) : treatmentSessions.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+            <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">No treatment sessions assigned.</p>
+            <p className="text-gray-400 text-sm mt-2">Your assigned treatment sessions will appear here.</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <Activity className="h-6 w-6 mr-3 text-blue-600" />
+                Assigned Treatment Sessions
+              </h2>
+              <p className="text-gray-600 mt-1">Your scheduled treatment sessions with required items</p>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                {treatmentSessions.map((session) => (
+                  <div key={session.session_id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">{session.treatment_name}</h3>
+                        <p className="text-sm text-gray-600">Session #{session.session_number} - Patient: {session.patient_first_name} {session.patient_last_name}</p>
+                      </div>
+                      <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                        session.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {session.status}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        <span>{new Date(session.session_date).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}</span>
+                      </div>
+                      
+                      {session.start_time && session.end_time && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Clock className="h-4 w-4 mr-2" />
+                          <span>{formatTimeToIST(session.start_time)} - {formatTimeToIST(session.end_time)}</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center text-sm text-gray-600">
+                        <User className="h-4 w-4 mr-2" />
+                        <span>Therapist: {session.therapist_first_name} {session.therapist_last_name}</span>
+                      </div>
+                      
+                      {session.practitioner_first_name && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <User className="h-4 w-4 mr-2" />
+                          <span>Practitioner: {session.practitioner_first_name} {session.practitioner_last_name}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {session.procedures_performed && (
+                      <div className="mb-4">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Required Procedures:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {(() => {
+                            try {
+                              const procedures = JSON.parse(session.procedures_performed);
+                              return procedures.map((procedure, index) => (
+                                <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                  {procedure}
+                                </span>
+                              ));
+                            } catch (e) {
+                              return (
+                                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                  {session.procedures_performed}
+                                </span>
+                              );
+                            }
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {session.oils_medicines_used && (
+                      <div className="mb-4">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Required Items/Medicines:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {(() => {
+                            try {
+                              const items = JSON.parse(session.oils_medicines_used);
+                              return items.map((item, index) => (
+                                <span key={index} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                                  {item}
+                                </span>
+                              ));
+                            } catch (e) {
+                              return null;
+                            }
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {session.therapist_notes && (
+                      <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700">Therapist Notes:</p>
+                        <p className="text-sm text-gray-600 mt-1">{session.therapist_notes}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // Practitioner/Staff/Admin View - Show patients and assign treatments
   return (
     <div className="space-y-8">
@@ -329,136 +485,266 @@ const TreatmentPlans = () => {
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-8 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">My Patients</h1>
-            <p className="text-blue-100 mt-2">Manage your scheduled appointments and patient care</p>
+            <h1 className="text-3xl font-bold">{user?.userType === 'staff' ? 'My Treatment Sessions' : 'My Patients'}</h1>
+            <p className="text-blue-100 mt-2">
+              {user?.userType === 'staff' 
+                ? 'View your assigned treatment sessions with required items' 
+                : 'Manage your scheduled appointments and patient care'
+              }
+            </p>
           </div>
           <div className="hidden md:block">
             <Calendar className="h-16 w-16 text-blue-200 opacity-80" />
           </div>
         </div>
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <div className="flex items-center">
-              <User className="h-8 w-8 text-blue-200" />
-              <div className="ml-3">
-                <p className="text-blue-100 text-sm">Total Patients</p>
-                <p className="text-2xl font-bold">{patients.length}</p>
+        {user?.userType !== 'staff' && (
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+              <div className="flex items-center">
+                <User className="h-8 w-8 text-blue-200" />
+                <div className="ml-3">
+                  <p className="text-blue-100 text-sm">Total Patients</p>
+                  <p className="text-2xl font-bold">{patients.length}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+              <div className="flex items-center">
+                <CheckCircle className="h-8 w-8 text-emerald-300" />
+                <div className="ml-3">
+                  <p className="text-blue-100 text-sm">Confirmed</p>
+                  <p className="text-2xl font-bold">
+                    {patients.filter(p => p.status === 'confirmed').length}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+              <div className="flex items-center">
+                <Clock className="h-8 w-8 text-amber-300" />
+                <div className="ml-3">
+                  <p className="text-blue-100 text-sm">Scheduled</p>
+                  <p className="text-2xl font-bold">
+                    {patients.filter(p => p.status === 'scheduled').length}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <div className="flex items-center">
-              <CheckCircle className="h-8 w-8 text-emerald-300" />
-              <div className="ml-3">
-                <p className="text-blue-100 text-sm">Confirmed</p>
-                <p className="text-2xl font-bold">
-                  {patients.filter(p => p.status === 'confirmed').length}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-            <div className="flex items-center">
-              <Clock className="h-8 w-8 text-amber-300" />
-              <div className="ml-3">
-                <p className="text-blue-100 text-sm">Scheduled</p>
-                <p className="text-2xl font-bold">
-                  {patients.filter(p => p.status === 'scheduled').length}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Patients List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-            <User className="h-6 w-6 mr-3 text-blue-600" />
-            Patient Appointments
-          </h2>
-          <p className="text-gray-600 mt-1">Your upcoming and recent patient sessions</p>
+      {/* Patients List or Staff Sessions */}
+      {user?.userType === 'staff' ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <Activity className="h-6 w-6 mr-3 text-blue-600" />
+              My Treatment Sessions
+            </h2>
+            <p className="text-gray-600 mt-1">Your assigned treatment sessions with required items</p>
+          </div>
+          <div className="p-6">
+            {treatmentSessions.length === 0 ? (
+              <div className="text-center py-12">
+                <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">No treatment sessions assigned.</p>
+                <p className="text-gray-400 text-sm mt-2">Your assigned treatment sessions will appear here.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {treatmentSessions.map((session) => (
+                  <div key={session.session_id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">{session.treatment_name}</h3>
+                        <p className="text-sm text-gray-600">Session #{session.session_number} - Patient: {session.patient_first_name} {session.patient_last_name}</p>
+                      </div>
+                      <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                        session.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {session.status}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        <span>{new Date(session.session_date).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}</span>
+                      </div>
+                      
+                      {session.start_time && session.end_time && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Clock className="h-4 w-4 mr-2" />
+                          <span>{formatTimeToIST(session.start_time)} - {formatTimeToIST(session.end_time)}</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center text-sm text-gray-600">
+                        <User className="h-4 w-4 mr-2" />
+                        <span>Therapist: {session.therapist_first_name} {session.therapist_last_name}</span>
+                      </div>
+                      
+                      {session.practitioner_first_name && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <User className="h-4 w-4 mr-2" />
+                          <span>Practitioner: {session.practitioner_first_name} {session.practitioner_last_name}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {session.procedures_performed && (
+                      <div className="mb-4">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Required Procedures:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {(() => {
+                            try {
+                              const procedures = JSON.parse(session.procedures_performed);
+                              return procedures.map((procedure, index) => (
+                                <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                  {procedure}
+                                </span>
+                              ));
+                            } catch (e) {
+                              return (
+                                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                  {session.procedures_performed}
+                                </span>
+                              );
+                            }
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {session.oils_medicines_used && (
+                      <div className="mb-4">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Required Items/Medicines:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {(() => {
+                            try {
+                              const items = JSON.parse(session.oils_medicines_used);
+                              return items.map((item, index) => (
+                                <span key={index} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                                  {item}
+                                </span>
+                              ));
+                            } catch (e) {
+                              return null;
+                            }
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {session.therapist_notes && (
+                      <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700">Therapist Notes:</p>
+                        <p className="text-sm text-gray-600 mt-1">{session.therapist_notes}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="p-6">
-          {patients.length === 0 ? (
-            <div className="text-center py-12">
-              <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">No patients with appointments found.</p>
-              <p className="text-gray-400 text-sm mt-2">New appointments will appear here</p>
-            </div>
-          ) : (
-            <div className="grid gap-4 md:gap-6">
-              {patients.map((patient) => (
-                <div
-                  key={patient.patient_id}
-                  className="group bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-blue-200 transition-all duration-200"
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0">
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-semibold text-lg">
-                              {patient.first_name[0]}{patient.last_name[0]}
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <User className="h-6 w-6 mr-3 text-blue-600" />
+              Patient Appointments
+            </h2>
+            <p className="text-gray-600 mt-1">Your upcoming and recent patient sessions</p>
+          </div>
+          <div className="p-6">
+            {patients.length === 0 ? (
+              <div className="text-center py-12">
+                <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">No patients with appointments found.</p>
+                <p className="text-gray-400 text-sm mt-2">New appointments will appear here</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:gap-6">
+                {patients.map((patient) => (
+                  <div
+                    key={patient.patient_id}
+                    className="group bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-blue-200 transition-all duration-200"
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-start space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                              <span className="text-white font-semibold text-lg">
+                                {patient.first_name[0]}{patient.last_name[0]}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
+                              {patient.first_name} {patient.last_name}
+                            </h3>
+                            <div className="flex items-center mt-2 space-x-4">
+                              <div className="flex items-center text-gray-600">
+                                {getServiceIcon(patient.service_type)}
+                                <span className="ml-2 text-sm capitalize">{patient.service_type}</span>
+                              </div>
+                              <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(patient.status)}`}>
+                                {getStatusIcon(patient.status)}
+                                <span className="ml-1.5 capitalize">{patient.status}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-4 lg:mt-0 lg:ml-6">
+                        <div className="bg-gray-50 rounded-lg p-4 min-w-[200px]">
+                          <div className="flex items-center text-gray-600 mb-2">
+                            <Calendar className="h-4 w-4 mr-2" />
+                            <span className="text-sm font-medium">
+                              {new Date(patient.appointment_date).toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
                             </span>
                           </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
-                            {patient.first_name} {patient.last_name}
-                          </h3>
-                          <div className="flex items-center mt-2 space-x-4">
-                            <div className="flex items-center text-gray-600">
-                              {getServiceIcon(patient.service_type)}
-                              <span className="ml-2 text-sm capitalize">{patient.service_type}</span>
-                            </div>
-                            <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(patient.status)}`}>
-                              {getStatusIcon(patient.status)}
-                              <span className="ml-1.5 capitalize">{patient.status}</span>
-                            </div>
+                          <div className="flex items-center text-gray-600">
+                            <Clock className="h-4 w-4 mr-2" />
+                            <span className="text-sm font-medium">{formatTimeToIST(patient.start_time)}</span>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                    <div className="mt-4 lg:mt-0 lg:ml-6">
-                      <div className="bg-gray-50 rounded-lg p-4 min-w-[200px]">
-                        <div className="flex items-center text-gray-600 mb-2">
-                          <Calendar className="h-4 w-4 mr-2" />
-                          <span className="text-sm font-medium">
-                            {new Date(patient.appointment_date).toLocaleDateString('en-US', {
-                              weekday: 'long',
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
-                          </span>
+                        <div className="mt-4">
+                          {treatmentPlans.some(plan => plan.patient_id === patient.patient_id) ? (
+                            <span className="text-green-600 font-medium">Treatment Assigned</span>
+                          ) : (
+                            <button
+                              onClick={() => handleAssignPlan(patient)}
+                              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                              Assign Treatment Plan
+                            </button>
+                          )}
                         </div>
-                        <div className="flex items-center text-gray-600">
-                          <Clock className="h-4 w-4 mr-2" />
-                          <span className="text-sm font-medium">{formatTimeToIST(patient.start_time)}</span>
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        {treatmentPlans.some(plan => plan.patient_id === patient.patient_id) ? (
-                          <span className="text-green-600 font-medium">Treatment Assigned</span>
-                        ) : (
-                          <button
-                            onClick={() => handleAssignPlan(patient)}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                          >
-                            Assign Treatment Plan
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Modal */}
       {showModal && (
