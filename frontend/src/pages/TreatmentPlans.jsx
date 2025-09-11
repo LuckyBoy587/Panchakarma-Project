@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { Calendar, Clock, User, Activity, CheckCircle, XCircle, AlertCircle, Clock as PendingIcon } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const TreatmentPlans = () => {
   const { user } = useAuth();
@@ -115,8 +116,22 @@ const TreatmentPlans = () => {
       patientId: selectedPatient.patient_id,
       ...formData
     });
-    setShowModal(false);
-    setFormData({ therapyId: '', startDate: '', numSessions: '', frequency: '' });
+    axios.post('/api/scheduler/', {...formData, patientId: selectedPatient.patient_id })
+      .then((response) => {
+        toast.success(`Treatment plan created successfully! ${response.data.treatmentSessions?.length || 0} sessions scheduled in 30-minute slots.`);
+        setShowModal(false);
+        setFormData({ therapyId: '', startDate: '', numSessions: '', frequency: '' });
+        // Refresh patients list to show updated data
+        fetchPatients();
+      })
+      .catch((error) => {
+        console.error('Error assigning treatment plan:', error);
+        if (error.response && error.response.data && error.response.data.error) {
+          toast.error(error.response.data.error);
+        } else {
+          toast.error('Failed to assign treatment plan');
+        }
+      });
   };
 
   const formatTimeToIST = (timeString) => {
@@ -293,7 +308,8 @@ const TreatmentPlans = () => {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-96 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">Assign Treatment Plan</h2>
+            <h2 className="text-xl font-bold mb-2">Assign Treatment Plan</h2>
+            <p className="text-sm text-gray-600 mb-4">Sessions will be scheduled in 30-minute time slots during therapist working hours.</p>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2">Therapy</label>

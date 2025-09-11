@@ -18,7 +18,7 @@ const TherapistProfile = () => {
     { day: 'Saturday', isWorking: false, startTime: '09:00', endTime: '17:00' },
     { day: 'Sunday', isWorking: false, startTime: '09:00', endTime: '17:00' },
   ]);
-  const [appointments, setAppointments] = useState([]);
+  const [treatmentSessions, setTreatmentSessions] = useState([]);
   const [workingHoursEvents, setWorkingHoursEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [workingDuration, setWorkingDuration] = useState({
@@ -43,11 +43,11 @@ const TherapistProfile = () => {
     fetchLeaveDays();
   }, []);
 
-  // Regenerate working hours events when busy slots, appointments, or leave days change
+  // Regenerate working hours events when busy slots, treatment sessions, or leave days change
   useEffect(() => {
     if (!loading) {
       try {
-        generateWorkingHoursEvents(busySlots, appointments, leaveDays);
+        generateWorkingHoursEvents(busySlots, treatmentSessions, leaveDays);
       } catch (error) {
         console.error('Error generating working hours events:', error);
         // Still try to generate with default data
@@ -58,7 +58,7 @@ const TherapistProfile = () => {
         }
       }
     }
-  }, [busySlots, appointments, leaveDays, loading]);
+  }, [busySlots, treatmentSessions, leaveDays, loading]);
 
   const fetchProfile = async () => {
     try {
@@ -77,30 +77,34 @@ const TherapistProfile = () => {
       // Fetch busy slots
       if (profile.therapist_id) {
         setTherapistId(profile.therapist_id);
-        await fetchBusySlots(profile.therapist_id);
       }
 
-      // Fetch appointments
-      const appointmentsResponse = await axios.get('/api/appointments');
-      const appointmentsData = appointmentsResponse.data;
-      // Convert appointments to calendar events format
-      const calendarEvents = appointmentsData.map(appointment => {
-        const dateStr = appointment.appointment_date.split('T')[0];
+      // Fetch treatment sessions for this therapist
+      const sessionsResponse = await axios.get(`/api/appointments`);
+      const sessionsData = sessionsResponse.data;
+      console.log('Fetched treatment sessions:', sessionsData);
+      console.log('First session structure:', sessionsData[0]); // Debug log
+      // Convert treatment sessions to calendar events format
+      const calendarEvents = sessionsData.map(session => {
+        // Handle both date formats (with or without time)
+        const dateStr = session.appointment_date.split('T')[0];
+        const startTime = session.start_time || '09:00:00'; // fallback if no start_time
+        const endTime = session.end_time || '10:00:00'; // fallback if no end_time
+        
         return {
-          id: appointment.appointment_id,
-          title: `${appointment.patient_first_name} ${appointment.patient_last_name} - ${appointment.treatment_type || 'Appointment'}`,
-          start: new Date(`${dateStr}T${appointment.start_time}`),
-          end: new Date(`${dateStr}T${appointment.end_time}`),
-          resource: appointment,
-          type: 'appointment'
+          id: session.appointment_id,
+          title: `${session.patient_first_name} ${session.patient_last_name} - ${session.service_type} (Session ${session.session_number})`,
+          start: new Date(`${dateStr}T${startTime}`),
+          end: new Date(`${dateStr}T${endTime}`),
+          resource: session,
+          type: 'treatment-session'
         }
       });
-
-      setAppointments(calendarEvents);
+      setTreatmentSessions(calendarEvents);
 
       // Generate working hours events
       try {
-        generateWorkingHoursEvents(busySlots, calendarEvents, leaveDays);
+        generateWorkingHoursEvents(busySlots, sessionsData, leaveDays);
       } catch (error) {
         console.error('Error generating working hours events:', error);
         // Still try to generate with default data
@@ -134,9 +138,11 @@ const TherapistProfile = () => {
     return date;
   };
 
-  const generateWorkingHoursEvents = (busySlots, appointments, leaveDays) => {
-    const events = [];
-    const today = new Date();
+  const generateWorkingHoursEvents = (busySlots, treatmentSessions, leaveDays) => {
+    try {
+      console.log('Generating working hours with:', { busySlots, treatmentSessions, leaveDays });
+      const events = [];
+      const today = new Date();
 
     // Generate leave day events
     const leaveDayEvents = [];
@@ -174,12 +180,22 @@ const TherapistProfile = () => {
       resource: slot
     }));
 
-    // Generate busy slot events from appointments
-    const appointmentSlots = appointments.map(appointment => ({
-      date: appointment.start.toISOString().split('T')[0],
-      start_time: appointment.start.toTimeString().slice(0, 5),
-      end_time: appointment.end.toTimeString().slice(0, 5)
-    }));
+    // Generate busy slot events from treatment sessions
+    const appointmentSlots = treatmentSessions
+      .filter(session => session && session.appointment_date) // Filter out null/undefined sessions
+      .map(session => {
+        const dateStr = session.appointment_date.split('T')[0];
+        const startTime = session.start_time || '09:00:00';
+        const endTime = session.end_time || '10:00:00';
+
+        return {
+          date: dateStr,
+          start_time: startTime,
+          end_time: endTime,
+          slot_id: session.appointment_id,
+          status: 'booked'
+        };
+      });
 
     // Convert leave days to busy slot format (full day leave for each occurrence of the day)
     const leaveSlots = [];
@@ -297,7 +313,13 @@ const TherapistProfile = () => {
       }
     }
 
-    setWorkingHoursEvents([...events, ...busySlotEvents, ...leaveDayEvents]);
+    setWorkingHoursEvents([...events, ...busySlotEvents, ...leaveDayEvents, ...treatmentSessions]);
+    console.log('Generated working hours events:', workingHoursEvents);
+    } catch (error) {
+      console.error('Error in generateWorkingHoursEvents:', error);
+      // Set empty events array on error to prevent crashes
+      setWorkingHoursEvents([]);
+    }
   };
 
   const handleDayToggle = (index) => {
@@ -320,7 +342,7 @@ const TherapistProfile = () => {
       toast.success('Working days saved successfully!');
 
       // Regenerate working hours events after saving
-      generateWorkingHoursEvents(busySlots, appointments, leaveDays);
+      generateWorkingHoursEvents(busySlots, treatmentSessions, leaveDays);
     } catch (error) {
       console.error('Error saving profile:', error);
       toast.error('Failed to save working days');
@@ -395,8 +417,8 @@ const TherapistProfile = () => {
             popup
             selectable
             onSelectEvent={(event) => {
-              if (event.type === 'appointment') {
-                toast.info(`Appointment: ${event.title}`);
+              if (event.type === 'treatment-session') {
+                toast.info(`Treatment Session: ${event.title}`);
               } else if (event.type === 'working-hours') {
                 toast.info(`Available: ${event.resource.day} - ${moment(event.start).format('HH:mm')} to ${moment(event.end).format('HH:mm')}`);
               } else if (event.type === 'busy-slot') {
@@ -443,7 +465,7 @@ const TherapistProfile = () => {
                   }
                 };
               } else {
-                // Appointment styling
+                // Treatment session styling
                 return {
                   style: {
                     backgroundColor: '#3B82F6',

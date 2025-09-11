@@ -46,26 +46,60 @@ router.get("/", authenticateToken, async (req, res) => {
       `;
       params = [req.user.userId];
     } else if (req.user.role === "therapist") {
-      // Get therapist's appointments
+      // Get therapist's treatment sessions (acting as appointments)
       query = `
-        SELECT a.*, p.first_name as patient_first_name, p.last_name as patient_last_name,
-               tr.first_name as therapist_first_name, tr.last_name as therapist_last_name
-        FROM appointments a
-        JOIN patients pt ON a.patient_id = pt.patient_id
+        SELECT
+          ts.session_id as appointment_id,
+          ts.session_date as appointment_date,
+          ts.start_time,
+          ts.end_time,
+          ts.status,
+          ts.session_number,
+          ts.procedures_performed,
+          ts.duration_minutes,
+          tp.treatment_name as service_type,
+          'treatment' as consultation_type,
+          tp.patient_id,
+          p.first_name as patient_first_name,
+          p.last_name as patient_last_name,
+          tr.first_name as therapist_first_name,
+          tr.last_name as therapist_last_name,
+          tp.treatment_plan_id,
+          ts.created_at as booked_at
+        FROM treatment_sessions ts
+        JOIN treatment_plans tp ON ts.treatment_plan_id = tp.treatment_plan_id
+        JOIN patients pt ON tp.patient_id = pt.patient_id
         JOIN users p ON pt.user_id = p.user_id
-        JOIN therapists ther ON a.therapist_id = ther.therapist_id
+        JOIN therapists ther ON ts.therapist_id = ther.therapist_id
         JOIN users tr ON ther.user_id = tr.user_id
-        WHERE ther.user_id = ?
-        ORDER BY a.appointment_date DESC, a.start_time DESC
+        WHERE ther.user_id = ? AND ts.status IN ('scheduled', 'completed')
+        ORDER BY ts.session_date DESC, ts.start_time DESC
       `;
       params = [req.user.userId];
     } else {
-      // Admin gets all appointments
+      // Admin gets all appointments and treatment sessions
       query = `
-        SELECT a.*, p.first_name as patient_first_name, p.last_name as patient_last_name,
-               COALESCE(pr.first_name, tr.first_name) as provider_first_name,
-               COALESCE(pr.last_name, tr.last_name) as provider_last_name,
-               CASE WHEN a.practitioner_id IS NOT NULL THEN 'practitioner' ELSE 'therapist' END as provider_type
+        SELECT
+          a.appointment_id,
+          a.appointment_date,
+          a.start_time,
+          a.end_time,
+          a.service_type,
+          a.consultation_type,
+          a.status,
+          a.patient_id,
+          p.first_name as patient_first_name,
+          p.last_name as patient_last_name,
+          COALESCE(pr.first_name, tr.first_name, ts_therapist.first_name) as provider_first_name,
+          COALESCE(pr.last_name, tr.last_name, ts_therapist.last_name) as provider_last_name,
+          CASE
+            WHEN a.practitioner_id IS NOT NULL THEN 'practitioner'
+            WHEN a.therapist_id IS NOT NULL THEN 'therapist'
+            WHEN ts.session_id IS NOT NULL THEN 'therapist'
+            ELSE 'unknown'
+          END as provider_type,
+          a.created_at as booked_at,
+          'appointment' as record_type
         FROM appointments a
         JOIN patients pt ON a.patient_id = pt.patient_id
         JOIN users p ON pt.user_id = p.user_id
@@ -73,7 +107,34 @@ router.get("/", authenticateToken, async (req, res) => {
         LEFT JOIN users pr ON prac.user_id = pr.user_id
         LEFT JOIN therapists ther ON a.therapist_id = ther.therapist_id
         LEFT JOIN users tr ON ther.user_id = tr.user_id
-        ORDER BY a.appointment_date DESC, a.start_time DESC
+
+        UNION ALL
+
+        SELECT
+          ts.session_id as appointment_id,
+          ts.session_date as appointment_date,
+          ts.start_time,
+          ts.end_time,
+          tp.treatment_name as service_type,
+          'treatment' as consultation_type,
+          ts.status,
+          tp.patient_id,
+          p2.first_name as patient_first_name,
+          p2.last_name as patient_last_name,
+          ts_therapist.first_name as provider_first_name,
+          ts_therapist.last_name as provider_last_name,
+          'therapist' as provider_type,
+          ts.created_at as booked_at,
+          'treatment_session' as record_type
+        FROM treatment_sessions ts
+        JOIN treatment_plans tp ON ts.treatment_plan_id = tp.treatment_plan_id
+        JOIN patients pt2 ON tp.patient_id = pt2.patient_id
+        JOIN users p2 ON pt2.user_id = p2.user_id
+        JOIN therapists ther2 ON ts.therapist_id = ther2.therapist_id
+        JOIN users ts_therapist ON ther2.user_id = ts_therapist.user_id
+        WHERE ts.status IN ('scheduled', 'completed')
+
+        ORDER BY appointment_date DESC, start_time DESC
       `;
     }
 

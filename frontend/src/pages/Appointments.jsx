@@ -232,10 +232,10 @@ const Appointments = () => {
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <p className="font-medium text-gray-900">
-                        Dr. {appointment.practitioner_first_name} {appointment.practitioner_last_name}
+                        Dr. {appointment.provider_first_name} {appointment.provider_last_name}
                       </p>
                       <p className="text-sm text-gray-600">
-                        {appointment.appointment_date} at {formatTime(appointment.start_time)}
+                        {new Date(appointment.appointment_date).toLocaleDateString()} at {formatTime(appointment.start_time)}
                       </p>
                     </div>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}>

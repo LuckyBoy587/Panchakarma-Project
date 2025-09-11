@@ -2,7 +2,8 @@
 -- MySQL Database Setup
 
 -- Create database
-CREATE DATABASE IF NOT EXISTS panchakarma_db;
+DROP DATABASE IF EXISTS panchakarma_db;
+CREATE DATABASE panchakarma_db;
 USE panchakarma_db;
 
 -- Users Table
@@ -138,11 +139,11 @@ CREATE TABLE appointments (
 );
 
 -- Treatment Plans Table
+DROP TABLE IF EXISTS treatment_plans;
 CREATE TABLE treatment_plans (
     treatment_plan_id VARCHAR(36) PRIMARY KEY,
     patient_id VARCHAR(36) NOT NULL,
     practitioner_id VARCHAR(36) NULL,
-    therapist_id VARCHAR(36) NULL,
     treatment_name VARCHAR(200) NOT NULL,
     treatment_type ENUM('panchakarma', 'consultation', 'therapy') NOT NULL,
     start_date DATE NOT NULL,
@@ -156,12 +157,11 @@ CREATE TABLE treatment_plans (
     expected_outcomes TEXT NULL,
     special_instructions TEXT NULL,
     status ENUM('planned', 'active', 'completed', 'paused', 'cancelled') DEFAULT 'planned',
-    total_cost DECIMAL(10,2) NOT NULL,
+    total_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
-    FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id),
-    FOREIGN KEY (therapist_id) REFERENCES therapists(therapist_id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE,
+    FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id) ON DELETE SET NULL
 );
 
 -- Treatment Sessions Table
@@ -171,10 +171,13 @@ CREATE TABLE treatment_sessions (
     appointment_id VARCHAR(36) NULL,
     session_number INT NOT NULL,
     session_date DATE NOT NULL,
+    start_time TIME NULL,
+    end_time TIME NULL,
     therapist_id VARCHAR(36) NOT NULL,
+    staff_id VARCHAR(36) NULL,
     procedures_performed JSON NOT NULL,
     oils_medicines_used JSON NULL,
-    duration_minutes INT NOT NULL,
+    duration_minutes INT NOT NULL DEFAULT 60,
     patient_response TEXT NULL,
     side_effects TEXT NULL,
     therapist_notes TEXT NULL,
@@ -186,10 +189,11 @@ CREATE TABLE treatment_sessions (
     session_rating INT CHECK (session_rating >= 1 AND session_rating <= 5),
     status ENUM('scheduled', 'completed', 'cancelled') DEFAULT 'scheduled',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (treatment_plan_id) REFERENCES treatment_plans(treatment_plan_id),
-    FOREIGN KEY (appointment_id) REFERENCES appointments(appointment_id),
-    FOREIGN KEY (therapist_id) REFERENCES practitioners(practitioner_id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (treatment_plan_id) REFERENCES treatment_plans(treatment_plan_id) ON DELETE CASCADE,
+    FOREIGN KEY (appointment_id) REFERENCES appointments(appointment_id) ON DELETE SET NULL,
+    FOREIGN KEY (therapist_id) REFERENCES therapists(therapist_id) ON DELETE CASCADE,
+    FOREIGN KEY (staff_id) REFERENCES users(user_id) ON DELETE SET NULL
 );
 
 -- Notifications Table
@@ -369,7 +373,6 @@ CREATE INDEX idx_appointments_therapist_id ON appointments(therapist_id);
 CREATE INDEX idx_appointments_date ON appointments(appointment_date);
 CREATE INDEX idx_treatment_plans_patient_id ON treatment_plans(patient_id);
 CREATE INDEX idx_treatment_plans_practitioner_id ON treatment_plans(practitioner_id);
-CREATE INDEX idx_treatment_plans_therapist_id ON treatment_plans(therapist_id);
 CREATE INDEX idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX idx_feedback_patient_id ON feedback(patient_id);
 CREATE INDEX idx_billing_patient_id ON billing(patient_id);
@@ -487,5 +490,55 @@ INSERT INTO therapy_required_items (therapy_id, stock_id, quantity) VALUES
 (10, 1, 20),
 (10, 16, 1);
 
--- Create uploads directory (this would be handled by the application)
--- The application should create this directory if it doesn't exist
+-- Sample slots data for therapist
+INSERT INTO slots (slot_id, therapist_id, date, start_time, end_time, status) VALUES
+('slot-ther-001', 'ther-profile-001', '2025-09-11', '08:00', '09:00', 'free'),
+('slot-ther-002', 'ther-profile-001', '2025-09-11', '09:00', '10:00', 'free'),
+('slot-ther-003', 'ther-profile-001', '2025-09-11', '10:00', '11:00', 'free'),
+('slot-ther-004', 'ther-profile-001', '2025-09-11', '11:00', '12:00', 'free'),
+('slot-ther-005', 'ther-profile-001', '2025-09-11', '13:00', '14:00', 'free'),
+('slot-ther-006', 'ther-profile-001', '2025-09-11', '14:00', '15:00', 'free'),
+('slot-ther-007', 'ther-profile-001', '2025-09-11', '15:00', '16:00', 'free'),
+('slot-ther-008', 'ther-profile-001', '2025-09-12', '08:00', '09:00', 'free'),
+('slot-ther-009', 'ther-profile-001', '2025-09-12', '09:00', '10:00', 'free'),
+('slot-ther-010', 'ther-profile-001', '2025-09-12', '10:00', '11:00', 'free'),
+('slot-ther-011', 'ther-profile-001', '2025-09-12', '11:00', '12:00', 'free'),
+('slot-ther-012', 'ther-profile-001', '2025-09-12', '13:00', '14:00', 'free'),
+('slot-ther-013', 'ther-profile-001', '2025-09-12', '14:00', '15:00', 'free'),
+('slot-ther-014', 'ther-profile-001', '2025-09-12', '15:00', '16:00', 'free');
+
+-- Sample stock data
+INSERT INTO stock (id, item_name, quantity, unit, updated_by) VALUES
+('stock-001', 'Sesame Oil', 1000, 'ml', 'staff-001'),
+('stock-002', 'Coconut Oil', 500, 'ml', 'staff-001'),
+('stock-003', 'Castor Oil', 200, 'ml', 'staff-001'),
+('stock-004', 'Ghee', 300, 'g', 'staff-001'),
+('stock-005', 'Medicated Powder', 150, 'g', 'staff-001'),
+('stock-006', 'Medicated Paste', 100, 'g', 'staff-001'),
+('stock-007', 'Herbal Decoction', 400, 'ml', 'staff-001'),
+('stock-008', 'Buttermilk', 2000, 'ml', 'staff-001'),
+('stock-009', 'Milk', 1000, 'ml', 'staff-001'),
+('stock-010', 'Honey', 500, 'ml', 'staff-001'),
+('stock-011', 'Lemon Juice', 300, 'ml', 'staff-001'),
+('stock-012', 'Therapy Bed', 5, 'piece', 'staff-001'),
+('stock-013', 'Shirodhara Pot', 3, 'piece', 'staff-001'),
+('stock-014', 'Steam Chamber', 2, 'piece', 'staff-001'),
+('stock-015', 'Massage Table', 4, 'piece', 'staff-001'),
+('stock-016', 'Towels', 50, 'piece', 'staff-001'),
+('stock-017', 'Cotton', 200, 'g', 'staff-001'),
+('stock-018', 'Cloth Strips', 100, 'piece', 'staff-001'),
+('stock-019', 'Blanket', 10, 'piece', 'staff-001'),
+('stock-020', 'Earthen Pot', 5, 'piece', 'staff-001'),
+('stock-021', 'Copper Vessel', 3, 'piece', 'staff-001'),
+('stock-022', 'Mortar and Pestle', 2, 'piece', 'staff-001'),
+('stock-023', 'Oil Heating Pan', 2, 'piece', 'staff-001'),
+('stock-024', 'Colonic Equipment', 1, 'set', 'staff-001'),
+('stock-025', 'Neti Pot', 5, 'piece', 'staff-001'),
+('stock-026', 'Eye Cup', 10, 'piece', 'staff-001'),
+('stock-027', 'Medicated Rice', 300, 'g', 'staff-001'),
+('stock-028', 'Herbal Leaves', 150, 'g', 'staff-001'),
+('stock-029', 'Herbal Poultice (Pinda)', 20, 'piece', 'staff-001'),
+('stock-030', 'Incense Sticks', 100, 'piece', 'staff-001');
+
+-- Tables have been recreated with correct structure above
+-- No additional ALTER TABLE statements needed
