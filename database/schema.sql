@@ -59,7 +59,6 @@ CREATE TABLE patients (
 -- Practitioners Table
 CREATE TABLE practitioners (
     practitioner_id VARCHAR(36) PRIMARY KEY,
-    user_id VARCHAR(36) NOT NULL,
     license_number VARCHAR(100) UNIQUE NOT NULL,
     qualification VARCHAR(500) NOT NULL,
     specializations JSON NOT NULL,
@@ -79,7 +78,7 @@ CREATE TABLE practitioners (
     emergency_availability BOOLEAN DEFAULT false,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    FOREIGN KEY (practitioner_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- Therapists Table
@@ -366,7 +365,7 @@ CREATE TABLE slots (
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_phone ON users(phone);
 CREATE INDEX idx_patients_user_id ON patients(user_id);
-CREATE INDEX idx_practitioners_user_id ON practitioners(user_id);
+-- practitioners now use practitioner_id which is the users.user_id; no separate user_id index required
 CREATE INDEX idx_appointments_patient_id ON appointments(patient_id);
 CREATE INDEX idx_appointments_practitioner_id ON appointments(practitioner_id);
 CREATE INDEX idx_appointments_therapist_id ON appointments(therapist_id);
@@ -389,9 +388,9 @@ INSERT INTO users (user_id, email, phone, password_hash, user_type, first_name, 
 ('ther-001', 'therapist@panchakarma.com', '+1234567896', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'therapist', 'Priya', 'Patel', true, true),
 ('pat-001', 'arjun.sharma@email.com', '+1234567892', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'patient', 'Arjun', 'Sharma', true, true);
 
-INSERT INTO practitioners (practitioner_id, user_id, license_number, qualification, specializations, experience_years, languages_spoken, consultation_fee, clinic_affiliation, practice_start_date, verification_status, start_time, end_time, leave_days, consultation_duration, max_patients_per_day) VALUES
-('prac-profile-001', 'prac-001', 'AYU-KL-12345', 'BAMS, MD Panchakarma', '["Panchakarma", "Ayurveda"]', 12, '["English", "Malayalam", "Hindi"]', 1500.00, 'Holistic Wellness Center', '2012-06-01', 'verified', '09:00', '17:00', '["sunday"]', 45, 16),
-('prac-profile-002', 'prac-002', 'AYU-KL-67890', 'BAMS, MD Ayurveda', '["Ayurveda", "Yoga Therapy"]', 8, '["English", "Hindi"]', 1200.00, 'Ayurvedic Healing Clinic', '2016-03-15', 'verified', '10:00', '16:00', '["sunday"]', 30, 12);
+INSERT INTO practitioners (practitioner_id, license_number, qualification, specializations, experience_years, languages_spoken, consultation_fee, clinic_affiliation, practice_start_date, verification_status, start_time, end_time, leave_days, consultation_duration, max_patients_per_day) VALUES
+('prac-001', 'AYU-KL-12345', 'BAMS, MD Panchakarma', '["Panchakarma", "Ayurveda"]', 12, '["English", "Malayalam", "Hindi"]', 1500.00, 'Holistic Wellness Center', '2012-06-01', 'verified', '09:00', '17:00', '["sunday"]', 45, 16),
+('prac-002', 'AYU-KL-67890', 'BAMS, MD Ayurveda', '["Ayurveda", "Yoga Therapy"]', 8, '["English", "Hindi"]', 1200.00, 'Ayurvedic Healing Clinic', '2016-03-15', 'verified', '10:00', '16:00', '["sunday"]', 30, 12);
 
 INSERT INTO therapists (therapist_id, user_id, license_number, qualification, specializations, experience_years, languages_spoken, consultation_fee, clinic_affiliation, practice_start_date, verification_status, start_time, end_time, leave_days, consultation_duration, max_patients_per_day) VALUES
 ('ther-profile-001', 'ther-001', 'TH-KL-12345', 'Certified Ayurvedic Therapist', '["Massage", "Yoga Therapy"]', 5, '["English", "Hindi"]', 800.00, 'Holistic Wellness Center', '2019-01-15', 'verified', '08:00', '16:00', '["sunday"]', 60, 8);

@@ -119,13 +119,13 @@ const Appointments = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Appointments</h1>
-        <p className="text-gray-600 mt-2">Book appointments with practitioners and manage your schedule</p>
+        <h1 className="text-3xl font-bold text-app">Appointments</h1>
+        <p className="text-muted mt-2">Book appointments with practitioners and manage your schedule</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Book New Appointment */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="surface rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center">
             <FaCalendarAlt className="mr-2 text-blue-600" />
             Book New Appointment
@@ -134,7 +134,7 @@ const Appointments = () => {
           <div className="space-y-4">
             {/* Date Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-muted mb-2">
                 Select Date
               </label>
               <input
@@ -142,19 +142,19 @@ const Appointments = () => {
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent text-app"
               />
             </div>
 
             {/* Time Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-muted mb-2">
                 Select Time
               </label>
               <select
                 value={selectedTime}
                 onChange={(e) => setSelectedTime(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent text-app"
               >
                 <option value="">Choose a time...</option>
                 {timeSlots.map((time) => (
@@ -211,7 +211,7 @@ const Appointments = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No doctors available for this date and time</p>
+                  <p className="text-muted text-center py-4">No doctors available for this date and time</p>
                 )}
               </div>
             )}
@@ -219,7 +219,7 @@ const Appointments = () => {
         </div>
 
         {/* My Appointments */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="surface rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center">
             <FaUserMd className="mr-2 text-purple-600" />
             My Appointments
@@ -227,24 +227,24 @@ const Appointments = () => {
 
           {userAppointments.length > 0 ? (
             <div className="space-y-3">
-              {userAppointments.map((appointment) => (
-                <div key={appointment.appointment_id} className="border border-gray-200 rounded-lg p-4">
+                {userAppointments.map((appointment) => (
+                  <div key={appointment.appointment_id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <p className="font-medium text-gray-900">
-                        Dr. {appointment.provider_first_name} {appointment.provider_last_name}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(appointment.appointment_date).toLocaleDateString()} at {formatTime(appointment.start_time)}
-                      </p>
+                        <p className="font-medium text-app">
+                          Dr. {appointment.provider_first_name} {appointment.provider_last_name}
+                        </p>
+                        <p className="text-sm text-muted">
+                          {new Date(appointment.appointment_date).toLocaleDateString()} at {formatTime(appointment.start_time)}
+                        </p>
                     </div>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}>
                       {appointment.status}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600">
-                    Service: {appointment.service_type}
-                  </p>
+                    <p className="text-sm text-muted">
+                      Service: {appointment.service_type}
+                    </p>
                 </div>
               ))}
             </div>

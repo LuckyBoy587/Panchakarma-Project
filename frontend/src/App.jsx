@@ -21,7 +21,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-  const { user, loading } = useAuth();
+  const { user, userType, loading } = useAuth();
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
@@ -31,7 +31,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.userType)) {
+  if (allowedRoles.length > 0 && !allowedRoles.includes(userType)) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -42,7 +42,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-app text-app">
           <Navbar />
           <main className="container mx-auto px-4 py-8">
             <Routes>

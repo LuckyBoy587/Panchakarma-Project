@@ -45,19 +45,8 @@ router.post(
       const { patientId, therapyId, startDate, numSessions, frequency } =
         req.body;
 
-      // Get practitioner_id from user_id
-      const [practitioners] = await pool.execute(
-        "SELECT practitioner_id FROM practitioners WHERE user_id = ?",
-        [req.user.userId]
-      );
-
-      if (practitioners.length === 0) {
-        return res
-          .status(403)
-          .json({ error: "User is not a registered practitioner" });
-      }
-
-      const practitionerId = practitioners[0].practitioner_id;
+      // practitioner_id is the same as user_id (one-to-one)
+      const practitionerId = req.user.userId;
 
       // Get therapy details
       const [therapies] = await pool.execute(

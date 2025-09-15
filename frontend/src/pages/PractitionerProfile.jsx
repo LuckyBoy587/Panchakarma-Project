@@ -354,8 +354,8 @@ const PractitionerProfile = () => {
     return (
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Practitioner Profile</h1>
-          <p className="text-gray-600 mt-2">Loading your profile...</p>
+          <h1 className="text-3xl font-bold text-app">Practitioner Profile</h1>
+          <p className="text-muted mt-2">Loading your profile...</p>
         </div>
       </div>
     );
@@ -364,33 +364,33 @@ const PractitionerProfile = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Practitioner Profile</h1>
-        <p className="text-gray-600 mt-2">Manage your professional information and availability</p>
+        <h1 className="text-3xl font-bold text-app">Practitioner Profile</h1>
+        <p className="text-muted mt-2">Manage your professional information and availability</p>
       </div>
 
       {/* Appointments Calendar */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Appointments Calendar</h2>
-        <p className="text-gray-600 mb-6">View your scheduled appointments and availability</p>
+      <div className="surface rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold text-app mb-4">Appointments Calendar</h2>
+        <p className="text-muted mb-6">View your scheduled appointments and availability</p>
 
         {/* Calendar Legend */}
         <div className="flex flex-wrap gap-4 mb-6">
           <div className="flex items-center space-x-2">
             <div className="w-4 h-4 bg-blue-500 rounded"></div>
-            <span className="text-sm text-gray-600">Appointments</span>
+            <span className="text-sm text-muted">Appointments</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-green-500 rounded opacity-30 border border-green-500"></div>
-            <span className="text-sm text-gray-600">Available Hours</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-red-500 rounded"></div>
-            <span className="text-sm text-gray-600">Busy Slots</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-            <span className="text-sm text-gray-600">Leave Days</span>
-          </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-green-500 rounded opacity-30 border border-green-500"></div>
+              <span className="text-sm text-muted">Available Hours</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-red-500 rounded"></div>
+              <span className="text-sm text-muted">Busy Slots</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+              <span className="text-sm text-muted">Leave Days</span>
+            </div>
         </div>
 
         <div className="calendar-container" style={{ height: '600px' }}>

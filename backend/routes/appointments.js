@@ -23,8 +23,8 @@ router.get("/", authenticateToken, async (req, res) => {
         FROM appointments a
         JOIN patients pt ON a.patient_id = pt.patient_id
         JOIN users p ON pt.user_id = p.user_id
-        LEFT JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
-        LEFT JOIN users pr ON prac.user_id = pr.user_id
+  LEFT JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
+  LEFT JOIN users pr ON pr.user_id = prac.practitioner_id
         LEFT JOIN therapists ther ON a.therapist_id = ther.therapist_id
         LEFT JOIN users tr ON ther.user_id = tr.user_id
         WHERE pt.user_id = ?
@@ -39,9 +39,9 @@ router.get("/", authenticateToken, async (req, res) => {
         FROM appointments a
         JOIN patients pt ON a.patient_id = pt.patient_id
         JOIN users p ON pt.user_id = p.user_id
-        JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
-        JOIN users pr ON prac.user_id = pr.user_id
-        WHERE prac.user_id = ?
+  JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
+  JOIN users pr ON pr.user_id = prac.practitioner_id
+  WHERE prac.practitioner_id = ?
         ORDER BY a.appointment_date DESC, a.start_time DESC
       `;
       params = [req.user.userId];
@@ -103,8 +103,8 @@ router.get("/", authenticateToken, async (req, res) => {
         FROM appointments a
         JOIN patients pt ON a.patient_id = pt.patient_id
         JOIN users p ON pt.user_id = p.user_id
-        LEFT JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
-        LEFT JOIN users pr ON prac.user_id = pr.user_id
+  LEFT JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
+  LEFT JOIN users pr ON pr.user_id = prac.practitioner_id
         LEFT JOIN therapists ther ON a.therapist_id = ther.therapist_id
         LEFT JOIN users tr ON ther.user_id = tr.user_id
 

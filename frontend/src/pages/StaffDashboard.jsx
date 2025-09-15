@@ -234,7 +234,7 @@ const StaffDashboard = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'rgb(var(--primary))' }}></div>
       </div>
     );
   }
@@ -242,16 +242,16 @@ const StaffDashboard = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-app">
           Staff Dashboard
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-muted mt-2">
           Manage inventory and room availability
         </p>
       </div>
 
       {/* Stock Management Section */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="surface rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-lg font-medium text-gray-900 flex items-center">
             <Package className="h-5 w-5 mr-2" />
@@ -267,7 +267,7 @@ const StaffDashboard = () => {
               setValidationErrors({});
               setShowStockModal(true);
             }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+            className="btn-primary px-4 py-2 rounded-lg flex items-center"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Item
@@ -306,28 +306,28 @@ const StaffDashboard = () => {
                   const availableItem = availableItems.find(availItem => availItem.name === item.item_name);
                   return (
                     <tr key={item.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-app">
                         {item.item_name}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
                         {availableItem ? availableItem.category : 'N/A'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
                         {item.quantity}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
                         {item.unit}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
                         {new Date(item.last_updated).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted">
                         {item.first_name} {item.last_name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => handleEditStock(item)}
-                          className="text-blue-600 hover:text-blue-900 flex items-center"
+                          className="text-primary hover:text-primary-600 flex items-center"
                         >
                           <Edit2 className="h-4 w-4 mr-1" />
                           Edit
@@ -343,9 +343,9 @@ const StaffDashboard = () => {
       </div>
 
       {/* Room Management Section */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="surface rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900 flex items-center">
+          <h2 className="text-lg font-medium text-app flex items-center">
             <Home className="h-5 w-5 mr-2" />
             Room Management
           </h2>
@@ -355,17 +355,17 @@ const StaffDashboard = () => {
             {rooms.map((room) => (
               <div key={room.id} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">{room.room_name}</h3>
+                  <h3 className="text-lg font-medium text-app">{room.room_name}</h3>
                   <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getRoomStatusColor(room.status)}`}>
                     {getRoomStatusIcon(room.status)}
                     <span className="ml-1 capitalize">{room.status}</span>
                   </span>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted">
                     Last updated: {new Date(room.last_updated).toLocaleDateString()}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted">
                     Updated by: {room.first_name} {room.last_name}
                   </p>
                 </div>

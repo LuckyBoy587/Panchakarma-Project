@@ -5,7 +5,7 @@ import { Calendar, Clock, User, Activity, CheckCircle, XCircle, AlertCircle, Clo
 import { toast } from 'react-toastify';
 
 const TreatmentPlans = () => {
-  const { user } = useAuth();
+  const { user, userType } = useAuth();
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,16 +22,16 @@ const TreatmentPlans = () => {
   });
 
   useEffect(() => {
-    if (user?.userType === 'patient') {
+    if (userType === 'patient') {
       fetchPatientTreatmentSessions();
-    } else if (user?.userType === 'staff') {
+    } else if (userType === 'staff') {
       fetchStaffTreatmentSessions();
     } else {
       fetchPatients();
       fetchTherapies();
       fetchTreatmentPlans();
     }
-  }, [user]);
+  }, [userType]);
 
   const fetchPatientTreatmentSessions = async () => {
     try {
@@ -197,7 +197,7 @@ const TreatmentPlans = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'rgb(var(--primary))' }}></div>
       </div>
     );
   }
@@ -206,8 +206,8 @@ const TreatmentPlans = () => {
     return (
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Treatment Plans</h1>
-          <p className="text-gray-600 mt-2">View patients with appointments</p>
+          <h1 className="text-3xl font-bold text-app">Treatment Plans</h1>
+          <p className="text-muted mt-2">View patients with appointments</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
           <p className="text-red-600">{error}</p>
@@ -216,13 +216,13 @@ const TreatmentPlans = () => {
     );
   }
 
-  if (user?.userType === 'patient') {
+  if (userType === 'patient') {
     // Patient View - Show their treatment sessions
     return (
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Treatment Sessions</h1>
-          <p className="text-gray-600 mt-2">View your scheduled treatment sessions</p>
+          <h1 className="text-3xl font-bold text-app">My Treatment Sessions</h1>
+          <p className="text-muted mt-2">View your scheduled treatment sessions</p>
         </div>
 
         {loading ? (
@@ -234,19 +234,19 @@ const TreatmentPlans = () => {
             <p className="text-red-600">{error}</p>
           </div>
         ) : treatmentSessions.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-            <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg">No treatment sessions found.</p>
-            <p className="text-gray-400 text-sm mt-2">Your treatment sessions will appear here once scheduled.</p>
+          <div className="surface rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+            <Calendar className="h-16 w-16 text-muted mx-auto mb-4" />
+            <p className="text-muted text-lg">No treatment sessions found.</p>
+            <p className="text-muted text-sm mt-2">Your treatment sessions will appear here once scheduled.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="surface rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <h2 className="text-xl font-semibold text-app flex items-center">
                 <Activity className="h-6 w-6 mr-3 text-blue-600" />
                 Treatment Sessions
               </h2>
-              <p className="text-gray-600 mt-1">Your upcoming and completed treatment sessions</p>
+              <p className="text-muted mt-1">Your upcoming and completed treatment sessions</p>
             </div>
             <div className="p-6">
               <div className="space-y-4">
@@ -254,8 +254,8 @@ const TreatmentPlans = () => {
                   <div key={session.session_id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{session.treatment_name}</h3>
-                        <p className="text-sm text-gray-600">Session #{session.session_number}</p>
+                        <h3 className="text-lg font-semibold text-app">{session.treatment_name}</h3>
+                        <p className="text-sm text-muted">Session #{session.session_number}</p>
                       </div>
                       <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
                         session.status === 'completed' ? 'bg-green-100 text-green-800' :
@@ -337,7 +337,7 @@ const TreatmentPlans = () => {
     );
   }
 
-  if (user?.userType === 'staff') {
+  if (userType === 'staff') {
     // Staff View - Show their assigned treatment sessions
     return (
       <div className="space-y-8">
@@ -376,7 +376,7 @@ const TreatmentPlans = () => {
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">{session.treatment_name}</h3>
-                        <p className="text-sm text-gray-600">Session #{session.session_number} - Patient: {session.patient_first_name} {session.patient_last_name}</p>
+                        <p className="text-sm text-muted">Session #{session.session_number} - Patient: {session.patient_first_name} {session.patient_last_name}</p>
                       </div>
                       <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
                         session.status === 'completed' ? 'bg-green-100 text-green-800' :
@@ -485,9 +485,9 @@ const TreatmentPlans = () => {
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-8 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">{user?.userType === 'staff' ? 'My Treatment Sessions' : 'My Patients'}</h1>
+            <h1 className="text-3xl font-bold">{userType === 'staff' ? 'My Treatment Sessions' : 'My Patients'}</h1>
             <p className="text-blue-100 mt-2">
-              {user?.userType === 'staff' 
+              {userType === 'staff' 
                 ? 'View your assigned treatment sessions with required items' 
                 : 'Manage your scheduled appointments and patient care'
               }
@@ -497,7 +497,7 @@ const TreatmentPlans = () => {
             <Calendar className="h-16 w-16 text-blue-200 opacity-80" />
           </div>
         </div>
-        {user?.userType !== 'staff' && (
+  {userType !== 'staff' && (
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
               <div className="flex items-center">
@@ -535,7 +535,7 @@ const TreatmentPlans = () => {
       </div>
 
       {/* Patients List or Staff Sessions */}
-      {user?.userType === 'staff' ? (
+  {userType === 'staff' ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center">

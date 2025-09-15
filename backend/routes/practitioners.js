@@ -1,5 +1,4 @@
 const express = require("express");
-const { v4: uuidv4 } = require("uuid");
 const { getPool } = require("../db");
 const { authenticateToken, authorizeRoles } = require("../middleware/auth");
 
@@ -13,7 +12,7 @@ router.get("/", authenticateToken, async (req, res) => {
     const [practitioners] = await pool.execute(`
       SELECT p.*, u.first_name, u.last_name, u.email, u.phone
       FROM practitioners p
-      JOIN users u ON p.user_id = u.user_id
+      JOIN users u ON p.practitioner_id = u.user_id
       WHERE p.verification_status = 'verified'
       ORDER BY p.created_at DESC
     `);
@@ -26,7 +25,8 @@ router.get("/", authenticateToken, async (req, res) => {
 });
 
 // Create practitioner profile
-router.post("/", authenticateToken, authorizeRoles("admin"), async (req, res) => {
+// Allow a registered practitioner to create their own profile (practitioner_id == user_id)
+router.post("/", authenticateToken, authorizeRoles("practitioner","admin"), async (req, res) => {
   try {
     const pool = getPool();
 
@@ -39,34 +39,79 @@ router.post("/", authenticateToken, authorizeRoles("admin"), async (req, res) =>
       consultationFee,
       clinicAffiliation,
       practiceStartDate,
-      workingHours,
+      startTime,
+      endTime,
+      bio,
+      verificationDocuments,
+      leaveDays,
       consultationDuration,
       maxPatientsPerDay,
+      emergencyAvailability,
     } = req.body;
 
-    const practitionerId = uuidv4();
-    await pool.execute(
-      `INSERT INTO practitioners (
-        practitioner_id, user_id, license_number, qualification, specializations,
-        experience_years, languages_spoken, consultation_fee, clinic_affiliation,
-        practice_start_date, working_hours, consultation_duration, max_patients_per_day
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        practitionerId,
-        req.user.userId,
-        licenseNumber,
-        qualification,
-        JSON.stringify(specializations),
-        experienceYears,
-        JSON.stringify(languagesSpoken),
-        consultationFee,
-        clinicAffiliation,
-        practiceStartDate,
-        JSON.stringify(workingHours),
-        consultationDuration,
-        maxPatientsPerDay,
-      ]
+    // Validate required fields per schema
+    if (
+      !licenseNumber ||
+      !qualification ||
+      !specializations ||
+      experienceYears === undefined ||
+      !languagesSpoken ||
+      consultationFee === undefined ||
+      !practiceStartDate ||
+      !startTime ||
+      !endTime
+    ) {
+      return res.status(400).json({ error: "Missing required practitioner fields" });
+    }
+
+    // Use the authenticated user's id as the practitioner_id (one-to-one relationship)
+    const practitionerId = req.user.userId;
+
+    // Prevent creating a duplicate profile for the same user
+    const [existing] = await pool.execute(
+      `SELECT * FROM practitioners WHERE practitioner_id = ?`,
+      [practitionerId]
     );
+    if (existing.length > 0) {
+      return res.status(400).json({ error: "Practitioner profile already exists for this user" });
+    }
+
+    try {
+      await pool.execute(
+        `INSERT INTO practitioners (
+          practitioner_id, license_number, qualification, specializations,
+          experience_years, languages_spoken, consultation_fee, clinic_affiliation,
+          practice_start_date, bio, verification_documents, start_time, end_time,
+          leave_days, consultation_duration, max_patients_per_day, emergency_availability
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          practitionerId,
+          licenseNumber,
+          qualification,
+          JSON.stringify(specializations),
+          experienceYears,
+          JSON.stringify(languagesSpoken),
+          consultationFee,
+          clinicAffiliation || null,
+          practiceStartDate,
+          bio || null,
+          verificationDocuments ? JSON.stringify(verificationDocuments) : null,
+          startTime,
+          endTime,
+          leaveDays ? JSON.stringify(leaveDays) : null,
+          consultationDuration || null,
+          maxPatientsPerDay || null,
+          emergencyAvailability ? !!emergencyAvailability : false,
+        ]
+      );
+    } catch (insertErr) {
+      // Handle duplicate license or other constraint errors
+      console.error('Practitioner insert error:', insertErr);
+      if (insertErr && insertErr.code === 'ER_DUP_ENTRY') {
+        return res.status(400).json({ error: 'License number already exists or duplicate entry' });
+      }
+      throw insertErr;
+    }
 
     const [newPractitioner] = await pool.execute(
       `SELECT * FROM practitioners WHERE practitioner_id = ?`,
@@ -91,8 +136,8 @@ router.get("/profile", authenticateToken, authorizeRoles("practitioner"), async 
     const [rows] = await pool.execute(
       `SELECT p.*, u.first_name, u.last_name, u.email, u.phone
        FROM practitioners p
-       JOIN users u ON p.user_id = u.user_id
-       WHERE p.user_id = ?`,
+       JOIN users u ON p.practitioner_id = u.user_id
+       WHERE p.practitioner_id = ?`,
       [req.user.userId]
     );
 
@@ -120,13 +165,13 @@ router.put("/profile", authenticateToken, authorizeRoles("practitioner"), async 
       `
       UPDATE practitioners
       SET working_hours = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE user_id = ?
+      WHERE practitioner_id = ?
     `,
       [JSON.stringify(workingHours), req.user.userId]
     );
 
     const [updatedPractitioner] = await pool.execute(
-      `SELECT * FROM practitioners WHERE user_id = ?`,
+      `SELECT * FROM practitioners WHERE practitioner_id = ?`,
       [req.user.userId]
     );
 
@@ -150,7 +195,7 @@ router.get("/leave-days", authenticateToken, authorizeRoles("practitioner"), asy
   try {
     const pool = getPool();
     const [rows] = await pool.execute(
-      `SELECT leave_days FROM practitioners WHERE user_id = ?`,
+      `SELECT leave_days FROM practitioners WHERE practitioner_id = ?`,
       [req.user.userId]
     );
     if (rows.length === 0) {

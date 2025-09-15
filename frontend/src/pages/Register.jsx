@@ -36,17 +36,17 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-app py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-app">
             Create your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-muted">
             Already have an account?{' '}
             <Link
               to="/login"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-medium text-primary hover:text-primary-600"
             >
               Sign in
             </Link>
@@ -64,7 +64,7 @@ const Register = () => {
                   name="firstName"
                   type="text"
                   required
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-app rounded-md focus:outline-none focus:ring-primary focus:border-transparent sm:text-sm"
                   placeholder="First Name"
                   value={formData.firstName}
                   onChange={handleChange}
@@ -79,7 +79,7 @@ const Register = () => {
                   name="lastName"
                   type="text"
                   required
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-app rounded-md focus:outline-none focus:ring-primary focus:border-transparent sm:text-sm"
                   placeholder="Last Name"
                   value={formData.lastName}
                   onChange={handleChange}
@@ -97,7 +97,7 @@ const Register = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-app rounded-md focus:outline-none focus:ring-primary focus:border-transparent sm:text-sm"
                 placeholder="Email address"
                 value={formData.email}
                 onChange={handleChange}
@@ -113,7 +113,7 @@ const Register = () => {
                 name="phone"
                 type="tel"
                 required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-app rounded-md focus:outline-none focus:ring-primary focus:border-transparent sm:text-sm"
                 placeholder="Phone number"
                 value={formData.phone}
                 onChange={handleChange}
@@ -121,13 +121,13 @@ const Register = () => {
             </div>
 
             <div>
-              <label htmlFor="userType" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="userType" className="block text-sm font-medium text-muted mb-2">
                 Account Type
               </label>
               <select
                 id="userType"
                 name="userType"
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-app rounded-md focus:outline-none focus:ring-primary focus:border-transparent sm:text-sm"
                 value={formData.userType}
                 onChange={handleChange}
               >
@@ -148,7 +148,7 @@ const Register = () => {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-app rounded-md focus:outline-none focus:ring-primary focus:border-transparent sm:text-sm"
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
@@ -160,7 +160,7 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md btn-primary disabled:opacity-50"
             >
               {loading ? 'Creating account...' : 'Create account'}
             </button>

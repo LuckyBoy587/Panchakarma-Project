@@ -362,18 +362,18 @@ const TherapistProfile = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2" style={{ borderBottomColor: 'var(--primary)' }}></div>
       </div>
     );
   }
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Therapist Profile</h1>
+      <h1 className="text-3xl font-bold text-app mb-8">Therapist Profile</h1>
 
       {/* Working Days Configuration */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Working Days & Hours</h2>
+      <div className="surface rounded-lg shadow-md p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4 text-app">Working Days & Hours</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           {workingDays.map((day, index) => (
             <div key={day.day} className="flex items-center space-x-2">
@@ -406,15 +406,15 @@ const TherapistProfile = () => {
         </div>
         <button
           onClick={handleSave}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="btn-primary px-4 py-2 rounded"
         >
           Save Working Days
         </button>
       </div>
 
       {/* Calendar */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold mb-4">Calendar</h2>
+      <div className="surface rounded-lg shadow-md p-6">
+        <h2 className="text-xl font-semibold mb-4 text-app">Calendar</h2>
         <div style={{ height: '600px' }}>
           <Calendar
             localizer={localizer}
@@ -441,11 +441,11 @@ const TherapistProfile = () => {
               if (event.type === 'working-hours') {
                 return {
                   style: {
-                    backgroundColor: '#10B981',
+                    backgroundColor: 'var(--accent)',
                     borderRadius: '4px',
                     opacity: 0.3,
-                    color: '#065F46',
-                    border: '1px solid #10B981',
+                    color: 'var(--text)',
+                    border: '1px solid var(--accent)',
                     display: 'block',
                     fontSize: '12px'
                   }
@@ -453,11 +453,11 @@ const TherapistProfile = () => {
               } else if (event.type === 'busy-slot') {
                 return {
                   style: {
-                    backgroundColor: '#EF4444',
+                    backgroundColor: 'var(--danger)',
                     borderRadius: '4px',
                     opacity: 0.8,
                     color: 'white',
-                    border: '1px solid #DC2626',
+                    border: '1px solid var(--danger)',
                     display: 'block',
                     fontSize: '12px'
                   }
@@ -465,11 +465,11 @@ const TherapistProfile = () => {
               } else if (event.type === 'leave-day') {
                 return {
                   style: {
-                    backgroundColor: '#F59E0B',
+                    backgroundColor: 'var(--primary-600)',
                     borderRadius: '4px',
                     opacity: 0.9,
                     color: 'white',
-                    border: '1px solid #D97706',
+                    border: '1px solid var(--primary-600)',
                     display: 'block',
                     fontSize: '12px'
                   }
@@ -478,7 +478,7 @@ const TherapistProfile = () => {
                 // Treatment session styling
                 return {
                   style: {
-                    backgroundColor: '#3B82F6',
+                    backgroundColor: 'var(--primary)',
                     borderRadius: '4px',
                     opacity: 0.9,
                     color: 'white',

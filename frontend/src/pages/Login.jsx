@@ -8,13 +8,13 @@ const Login = () => {
     password: '',
   });
   const [loading, setLoading] = useState(false);
-  const { login, user } = useAuth();
+  const { login, user, userType } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
       // Redirect based on user type after login
-      if (user.userType === 'staff') {
+      if (userType === 'staff') {
         navigate('/staff-dashboard');
       } else {
         navigate('/dashboard');
@@ -32,24 +32,22 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    const result = await login(formData.email, formData.password);
-
+    await login(formData.email, formData.password);
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-app py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-app">
             Sign in to your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-muted">
             Or{' '}
             <Link
               to="/register"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-medium text-primary hover:text-primary-600"
             >
               create a new account
             </Link>
@@ -67,7 +65,7 @@ const Login = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className="input-field appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className="input-field appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-app rounded-t-md focus:outline-none focus:ring-primary focus:border-transparent focus:z-10 sm:text-sm"
                 placeholder="Email address"
                 value={formData.email}
                 onChange={handleChange}
@@ -83,7 +81,7 @@ const Login = () => {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="input-field appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className="input-field appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-app rounded-b-md focus:outline-none focus:ring-primary focus:border-transparent focus:z-10 sm:text-sm"
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
@@ -95,7 +93,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md btn-primary disabled:opacity-50"
             >
               {loading ? 'Signing in...' : 'Sign in'}
             </button>

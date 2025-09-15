@@ -79,8 +79,8 @@ const PatientProfile = () => {
     return (
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Patient Profile</h1>
-          <p className="text-gray-600 mt-2">Loading your profile...</p>
+          <h1 className="text-3xl font-bold text-app">Patient Profile</h1>
+          <p className="text-muted mt-2">Loading your profile...</p>
         </div>
       </div>
     );
@@ -89,25 +89,25 @@ const PatientProfile = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Patient Profile</h1>
-        <p className="text-gray-600 mt-2">Manage your health information and preferences</p>
+        <h1 className="text-3xl font-bold text-app">Patient Profile</h1>
+        <p className="text-muted mt-2">Manage your health information and preferences</p>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="surface rounded-lg shadow p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Pre-existing Problems Section */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Health Information</h3>
+            <h3 className="text-lg font-medium text-app mb-4">Health Information</h3>
             <div className="grid grid-cols-1 gap-6">
               <div>
-                <label htmlFor="medicalConditions" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="medicalConditions" className="block text-sm font-medium text-muted">
                   Pre-existing Problems / Medical Conditions
                 </label>
                 <textarea
                   id="medicalConditions"
                   name="medicalConditions"
                   rows={4}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-transparent sm:text-sm"
                   placeholder="Please describe any pre-existing medical conditions, chronic illnesses, or health problems..."
                   value={formData.medicalConditions}
                   onChange={handleInputChange}
@@ -115,14 +115,14 @@ const PatientProfile = () => {
               </div>
 
               <div>
-                <label htmlFor="allergies" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="allergies" className="block text-sm font-medium text-muted">
                   Allergies
                 </label>
                 <textarea
                   id="allergies"
                   name="allergies"
                   rows={3}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-transparent sm:text-sm"
                   placeholder="List any allergies (food, medication, environmental, etc.)..."
                   value={formData.allergies}
                   onChange={handleInputChange}
@@ -130,14 +130,14 @@ const PatientProfile = () => {
               </div>
 
               <div>
-                <label htmlFor="currentMedications" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="currentMedications" className="block text-sm font-medium text-muted">
                   Current Medications
                 </label>
                 <textarea
                   id="currentMedications"
                   name="currentMedications"
                   rows={3}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-transparent sm:text-sm"
                   placeholder="List any medications you are currently taking..."
                   value={formData.currentMedications}
                   onChange={handleInputChange}
@@ -145,14 +145,14 @@ const PatientProfile = () => {
               </div>
 
               <div>
-                <label htmlFor="pastSurgeries" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="pastSurgeries" className="block text-sm font-medium text-muted">
                   Past Surgeries
                 </label>
                 <textarea
                   id="pastSurgeries"
                   name="pastSurgeries"
                   rows={3}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-transparent sm:text-sm"
                   placeholder="List any past surgeries or medical procedures..."
                   value={formData.pastSurgeries}
                   onChange={handleInputChange}
@@ -160,14 +160,14 @@ const PatientProfile = () => {
               </div>
 
               <div>
-                <label htmlFor="familyMedicalHistory" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="familyMedicalHistory" className="block text-sm font-medium text-muted">
                   Family Medical History
                 </label>
                 <textarea
                   id="familyMedicalHistory"
                   name="familyMedicalHistory"
                   rows={3}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-transparent sm:text-sm"
                   placeholder="Describe any relevant family medical history..."
                   value={formData.familyMedicalHistory}
                   onChange={handleInputChange}
@@ -178,17 +178,17 @@ const PatientProfile = () => {
 
           {/* Lifestyle Information Section */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Lifestyle Information</h3>
+            <h3 className="text-lg font-medium text-app mb-4">Lifestyle Information</h3>
             <div className="grid grid-cols-1 gap-6">
               <div>
-                <label htmlFor="lifestyleHabits" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="lifestyleHabits" className="block text-sm font-medium text-muted">
                   Lifestyle Habits
                 </label>
                 <textarea
                   id="lifestyleHabits"
                   name="lifestyleHabits"
                   rows={3}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-transparent sm:text-sm"
                   placeholder="Describe your daily habits, smoking, alcohol consumption, etc..."
                   value={formData.lifestyleHabits}
                   onChange={handleInputChange}
@@ -196,14 +196,14 @@ const PatientProfile = () => {
               </div>
 
               <div>
-                <label htmlFor="dietaryPreferences" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="dietaryPreferences" className="block text-sm font-medium text-muted">
                   Dietary Preferences
                 </label>
                 <textarea
                   id="dietaryPreferences"
                   name="dietaryPreferences"
                   rows={3}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-transparent sm:text-sm"
                   placeholder="Describe your dietary preferences, restrictions, or eating habits..."
                   value={formData.dietaryPreferences}
                   onChange={handleInputChange}
@@ -211,14 +211,14 @@ const PatientProfile = () => {
               </div>
 
               <div>
-                <label htmlFor="exerciseRoutine" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="exerciseRoutine" className="block text-sm font-medium text-muted">
                   Exercise Routine
                 </label>
                 <textarea
                   id="exerciseRoutine"
                   name="exerciseRoutine"
                   rows={3}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-transparent sm:text-sm"
                   placeholder="Describe your regular exercise or physical activity routine..."
                   value={formData.exerciseRoutine}
                   onChange={handleInputChange}
@@ -232,7 +232,7 @@ const PatientProfile = () => {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? 'Saving...' : 'Save Profile'}
             </button>
