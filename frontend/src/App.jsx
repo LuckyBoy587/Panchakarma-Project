@@ -116,8 +116,8 @@ function App() {
             </Routes>
           </main>
           <ToastContainer
-            position="top-right"
-            autoClose={5000}
+            position="bottom-right"
+            autoClose={500}
             hideProgressBar={false}
             newestOnTop={false}
             closeOnClick
@@ -125,6 +125,7 @@ function App() {
             pauseOnFocusLoss
             draggable
             pauseOnHover
+            toastClassName="modern-toast"
           />
         </div>
       </Router>

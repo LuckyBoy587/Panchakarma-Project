@@ -22,12 +22,12 @@ router.get("/", authenticateToken, async (req, res) => {
                CASE WHEN a.practitioner_id IS NOT NULL THEN 'practitioner' ELSE 'therapist' END as provider_type
         FROM appointments a
         JOIN patients pt ON a.patient_id = pt.patient_id
-        JOIN users p ON pt.user_id = p.user_id
+    JOIN users p ON pt.patient_id = p.user_id
   LEFT JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
   LEFT JOIN users pr ON pr.user_id = prac.practitioner_id
         LEFT JOIN therapists ther ON a.therapist_id = ther.therapist_id
         LEFT JOIN users tr ON ther.user_id = tr.user_id
-        WHERE pt.user_id = ?
+    WHERE pt.patient_id = ?
         ORDER BY a.appointment_date DESC, a.start_time DESC
       `;
       params = [req.user.userId];
@@ -38,10 +38,10 @@ router.get("/", authenticateToken, async (req, res) => {
                pr.first_name as practitioner_first_name, pr.last_name as practitioner_last_name
         FROM appointments a
         JOIN patients pt ON a.patient_id = pt.patient_id
-        JOIN users p ON pt.user_id = p.user_id
+      JOIN users p ON pt.patient_id = p.user_id
   JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
   JOIN users pr ON pr.user_id = prac.practitioner_id
-  WHERE prac.practitioner_id = ?
+    WHERE prac.practitioner_id = ?
         ORDER BY a.appointment_date DESC, a.start_time DESC
       `;
       params = [req.user.userId];
@@ -69,7 +69,7 @@ router.get("/", authenticateToken, async (req, res) => {
         FROM treatment_sessions ts
         JOIN treatment_plans tp ON ts.treatment_plan_id = tp.treatment_plan_id
         JOIN patients pt ON tp.patient_id = pt.patient_id
-        JOIN users p ON pt.user_id = p.user_id
+    JOIN users p ON pt.patient_id = p.user_id
         JOIN therapists ther ON ts.therapist_id = ther.therapist_id
         JOIN users tr ON ther.user_id = tr.user_id
         WHERE ther.user_id = ? AND ts.status IN ('scheduled', 'completed')
@@ -102,7 +102,7 @@ router.get("/", authenticateToken, async (req, res) => {
           'appointment' as record_type
         FROM appointments a
         JOIN patients pt ON a.patient_id = pt.patient_id
-        JOIN users p ON pt.user_id = p.user_id
+    JOIN users p ON pt.patient_id = p.user_id
   LEFT JOIN practitioners prac ON a.practitioner_id = prac.practitioner_id
   LEFT JOIN users pr ON pr.user_id = prac.practitioner_id
         LEFT JOIN therapists ther ON a.therapist_id = ther.therapist_id
@@ -129,7 +129,7 @@ router.get("/", authenticateToken, async (req, res) => {
         FROM treatment_sessions ts
         JOIN treatment_plans tp ON ts.treatment_plan_id = tp.treatment_plan_id
         JOIN patients pt2 ON tp.patient_id = pt2.patient_id
-        JOIN users p2 ON pt2.user_id = p2.user_id
+    JOIN users p2 ON pt2.patient_id = p2.user_id
         JOIN therapists ther2 ON ts.therapist_id = ther2.therapist_id
         JOIN users ts_therapist ON ther2.user_id = ts_therapist.user_id
         WHERE ts.status IN ('scheduled', 'completed')
@@ -163,9 +163,9 @@ router.post("/", authenticateToken, async (req, res) => {
       preparationNotes,
     } = req.body;
 
-    // Get patient ID from user ID
+    // Get patient ID (patient_id is same as users.user_id)
     const [patient] = await pool.execute(
-      "SELECT patient_id FROM patients WHERE user_id = ?",
+      "SELECT patient_id FROM patients WHERE patient_id = ?",
       [req.user.userId]
     );
     if (patient.length === 0) {

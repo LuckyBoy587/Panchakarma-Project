@@ -107,7 +107,7 @@ router.post("/available", authenticateToken, async (req, res) => {
         last_name,
         p.specializations
       FROM practitioners p
-      natural join users
+      join users u on p.practitioner_id = u.user_id
     `);
 
     console.log("Total practitioners:", practitioners.length);

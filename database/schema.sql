@@ -27,9 +27,10 @@ CREATE TABLE users (
 );
 
 -- Patients Table
+-- Patients Table
+-- patient_id is the same as the corresponding users.user_id for patient accounts
 CREATE TABLE patients (
     patient_id VARCHAR(36) PRIMARY KEY,
-    user_id VARCHAR(36) NOT NULL,
     date_of_birth DATE NOT NULL,
     gender ENUM('male', 'female', 'other') NOT NULL,
     blood_group VARCHAR(5) NULL,
@@ -48,12 +49,30 @@ CREATE TABLE patients (
     lifestyle_habits TEXT NULL,
     dietary_preferences TEXT NULL,
     exercise_routine TEXT NULL,
+    -- New structured fields requested by user
+    contact_number VARCHAR(20) NULL,
+    email_address VARCHAR(255) NULL,
+    address TEXT NULL,
+    full_name VARCHAR(255) NULL,
+    age INT NULL,
+    -- Medical history detailed fields (kept as text for flexibility)
+    existing_health_conditions TEXT NULL,
+    past_surgeries_major_illnesses TEXT NULL,
+    allergies_detailed TEXT NULL,
+    current_medications_detailed TEXT NULL,
+    family_medical_history_detailed TEXT NULL,
+    -- Lifestyle (Ayurveda focused)
+    diet_pattern ENUM('veg','non-veg','mixed') NULL,
+    sleep_pattern ENUM('good','disturbed','insomnia') NULL,
+    daily_routine ENUM('sedentary','moderately_active','active') NULL,
+    stress_level ENUM('low','moderate','high') NULL,
+    addiction_history TEXT NULL,
     prakriti_assessment JSON NULL,
     vikriti_assessment JSON NULL,
     dosha_dominance VARCHAR(20) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    FOREIGN KEY (patient_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- Practitioners Table
@@ -364,7 +383,7 @@ CREATE TABLE slots (
 -- Indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_phone ON users(phone);
-CREATE INDEX idx_patients_user_id ON patients(user_id);
+-- removed idx_patients_user_id because patients no longer stores a separate user_id column
 -- practitioners now use practitioner_id which is the users.user_id; no separate user_id index required
 CREATE INDEX idx_appointments_patient_id ON appointments(patient_id);
 CREATE INDEX idx_appointments_practitioner_id ON appointments(practitioner_id);
@@ -395,8 +414,26 @@ INSERT INTO practitioners (practitioner_id, license_number, qualification, speci
 INSERT INTO therapists (therapist_id, user_id, license_number, qualification, specializations, experience_years, languages_spoken, consultation_fee, clinic_affiliation, practice_start_date, verification_status, start_time, end_time, leave_days, consultation_duration, max_patients_per_day) VALUES
 ('ther-profile-001', 'ther-001', 'TH-KL-12345', 'Certified Ayurvedic Therapist', '["Massage", "Yoga Therapy"]', 5, '["English", "Hindi"]', 800.00, 'Holistic Wellness Center', '2019-01-15', 'verified', '08:00', '16:00', '["sunday"]', 60, 8);
 
-INSERT INTO patients (patient_id, user_id, date_of_birth, gender, blood_group, height_cm, weight_kg, occupation, marital_status, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, medical_conditions, allergies, current_medications, dosha_dominance) VALUES
-('pat-profile-001', 'pat-001', '1985-07-15', 'male', 'O+', 175, 78.5, 'Software Engineer', 'married', 'Priya Sharma', '+1234567893', 'Spouse', 'Hypertension, Chronic stress', 'Pollen, Dust mites', 'Amlodipine 5mg daily', 'Pitta');
+INSERT INTO patients (patient_id, date_of_birth, gender, blood_group, height_cm, weight_kg, occupation, marital_status, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, medical_conditions, allergies, current_medications, dosha_dominance) VALUES
+('pat-001', '1985-07-15', 'male', 'O+', 175, 78.5, 'Software Engineer', 'married', 'Priya Sharma', '+1234567893', 'Spouse', 'Hypertension, Chronic stress', 'Pollen, Dust mites', 'Amlodipine 5mg daily', 'Pitta');
+
+-- Migration statements: If you have an existing DB, run the following ALTER TABLE statements
+-- to add the new columns without dropping existing data.
+-- ALTER TABLE patients ADD COLUMN contact_number VARCHAR(20) NULL;
+-- ALTER TABLE patients ADD COLUMN email_address VARCHAR(255) NULL;
+-- ALTER TABLE patients ADD COLUMN address TEXT NULL;
+-- ALTER TABLE patients ADD COLUMN full_name VARCHAR(255) NULL;
+-- ALTER TABLE patients ADD COLUMN age INT NULL;
+-- ALTER TABLE patients ADD COLUMN existing_health_conditions TEXT NULL;
+-- ALTER TABLE patients ADD COLUMN past_surgeries_major_illnesses TEXT NULL;
+-- ALTER TABLE patients ADD COLUMN allergies_detailed TEXT NULL;
+-- ALTER TABLE patients ADD COLUMN current_medications_detailed TEXT NULL;
+-- ALTER TABLE patients ADD COLUMN family_medical_history_detailed TEXT NULL;
+-- ALTER TABLE patients ADD COLUMN diet_pattern ENUM('veg','non-veg','mixed') NULL;
+-- ALTER TABLE patients ADD COLUMN sleep_pattern ENUM('good','disturbed','insomnia') NULL;
+-- ALTER TABLE patients ADD COLUMN daily_routine ENUM('sedentary','moderately_active','active') NULL;
+-- ALTER TABLE patients ADD COLUMN stress_level ENUM('low','moderate','high') NULL;
+-- ALTER TABLE patients ADD COLUMN addiction_history TEXT NULL;
 
 -- Sample staff user
 INSERT INTO users (user_id, email, phone, password_hash, user_type, first_name, last_name, email_verified, phone_verified) VALUES

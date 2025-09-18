@@ -19,10 +19,10 @@ router.get("/", authenticateToken, authorizeRoles("patient", "practitioner", "ad
                pr.first_name as practitioner_first_name, pr.last_name as practitioner_last_name
   FROM treatment_plans tp
   JOIN patients pt ON tp.patient_id = pt.patient_id
-  JOIN users p ON pt.user_id = p.user_id
+  JOIN users p ON pt.patient_id = p.user_id
   JOIN practitioners prac ON tp.practitioner_id = prac.practitioner_id
   JOIN users pr ON pr.user_id = prac.practitioner_id
-  WHERE pt.user_id = ?
+  WHERE pt.patient_id = ?
         ORDER BY tp.created_at DESC
       `;
       params = [req.user.userId];
@@ -32,7 +32,7 @@ router.get("/", authenticateToken, authorizeRoles("patient", "practitioner", "ad
                pr.first_name as practitioner_first_name, pr.last_name as practitioner_last_name
   FROM treatment_plans tp
   JOIN patients pt ON tp.patient_id = pt.patient_id
-  JOIN users p ON pt.user_id = p.user_id
+  JOIN users p ON pt.patient_id = p.user_id
   JOIN practitioners prac ON tp.practitioner_id = prac.practitioner_id
   JOIN users pr ON pr.user_id = prac.practitioner_id
   WHERE prac.practitioner_id = ?
@@ -43,13 +43,13 @@ router.get("/", authenticateToken, authorizeRoles("patient", "practitioner", "ad
       query = `
         SELECT tp.*, p.first_name as patient_first_name, p.last_name as patient_last_name,
                pr.first_name as practitioner_first_name, pr.last_name as practitioner_last_name
-        FROM treatment_plans tp
-        JOIN patients pt ON tp.patient_id = pt.patient_id
-        JOIN users p ON pt.user_id = p.user_id
-        JOIN practitioners prac ON tp.practitioner_id = prac.practitioner_id
-        JOIN users pr ON pr.user_id = prac.practitioner_id
+  FROM treatment_plans tp
+  JOIN patients pt ON tp.patient_id = pt.patient_id
+  JOIN users p ON pt.patient_id = p.user_id
+  JOIN practitioners prac ON tp.practitioner_id = prac.practitioner_id
+  JOIN users pr ON pr.user_id = prac.practitioner_id
         ORDER BY tp.created_at DESC
-      `;
+  `;
     }
 
     const [treatmentPlans] = await pool.execute(query, params);
@@ -154,7 +154,7 @@ router.get("/sessions/therapist/:therapistId", authenticateToken, authorizeRoles
       FROM treatment_sessions ts
       JOIN treatment_plans tp ON ts.treatment_plan_id = tp.treatment_plan_id
       JOIN patients pt ON tp.patient_id = pt.patient_id
-      JOIN users p ON pt.user_id = p.user_id
+  JOIN users p ON pt.patient_id = p.user_id
       JOIN therapists t ON ts.therapist_id = t.therapist_id
       JOIN users u ON t.user_id = u.user_id
       WHERE ts.therapist_id = ? AND ts.status IN ('scheduled', 'completed')
@@ -190,7 +190,7 @@ router.get("/sessions/patient", authenticateToken, authorizeRoles("patient"), as
       JOIN users t ON th.user_id = t.user_id
   LEFT JOIN practitioners prac ON tp.practitioner_id = prac.practitioner_id
   LEFT JOIN users p ON p.user_id = prac.practitioner_id
-      WHERE pt.user_id = ?
+  WHERE pt.patient_id = ?
       ORDER BY ts.session_date, ts.start_time
     `;
 
@@ -221,7 +221,7 @@ router.get("/sessions/staff", authenticateToken, authorizeRoles("staff", "admin"
       FROM treatment_sessions ts
       JOIN treatment_plans tp ON ts.treatment_plan_id = tp.treatment_plan_id
       JOIN patients pt ON tp.patient_id = pt.patient_id
-      JOIN users p ON pt.user_id = p.user_id
+  JOIN users p ON pt.patient_id = p.user_id
       JOIN therapists th ON ts.therapist_id = th.therapist_id
       JOIN users t ON th.user_id = t.user_id
   LEFT JOIN practitioners prac ON tp.practitioner_id = prac.practitioner_id

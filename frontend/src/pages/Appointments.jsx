@@ -24,6 +24,20 @@ const Appointments = () => {
     fetchUserAppointments();
   }, []);
 
+  const safeParseArray = (val) => {
+    if (val === null || val === undefined) return [];
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+      const s = val.trim();
+      if (!s) return [];
+      if (s.startsWith('[') || s.startsWith('{')) {
+        try { const parsed = JSON.parse(s); return Array.isArray(parsed) ? parsed : [parsed]; } catch(e) {}
+      }
+      return s.split(',').map(x => x.trim()).filter(x => x.length > 0);
+    }
+    return [val];
+  };
+
   const fetchUserAppointments = async () => {
     try {
       const response = await axios.get('/api/appointments');
@@ -62,7 +76,7 @@ const Appointments = () => {
     try {
       // First, get patient ID
       const patientResponse = await axios.get('/api/patients');
-      const patient = patientResponse.data.find(p => p.user_id === user.userId);
+  const patient = patientResponse.data.find(p => p.patient_id === user.userId);
 
       if (!patient) {
         toast.error('Patient profile not found. Please complete your profile first.');
@@ -189,16 +203,10 @@ const Appointments = () => {
                               Dr. {practitioner.first_name} {practitioner.last_name}
                             </p>
                             <p className="text-sm text-green-600">
-                              {(() => {
-                                try {
-                                  const specs = typeof practitioner.specializations === 'string' 
-                                    ? JSON.parse(practitioner.specializations) 
-                                    : practitioner.specializations;
+                                {(() => {
+                                  const specs = safeParseArray(practitioner.specializations);
                                   return specs && specs.length > 0 ? specs.join(', ') : 'General Practitioner';
-                                } catch {
-                                  return 'General Practitioner';
-                                }
-                              })()}
+                                })()}
                             </p>
                           </div>
                           <div className="text-right">

@@ -16,6 +16,8 @@ const Login = () => {
       // Redirect based on user type after login
       if (userType === 'staff') {
         navigate('/staff-dashboard');
+      } else if (userType === 'practitioner') {
+        navigate('/practitioner-profile');
       } else {
         navigate('/dashboard');
       }
