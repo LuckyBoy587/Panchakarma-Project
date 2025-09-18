@@ -179,8 +179,8 @@ const PractitionerProfile = () => {
       const busyEvents = busySlotsData.map(slot => ({
         id: `busy-${slot.slot_id}`,
         title: 'Busy',
-        start: new Date(`${slot.date}T${slot.start_time}`),
-        end: new Date(`${slot.date}T${slot.end_time}`),
+        start: moment(`${slot.date}T${slot.start_time}`).toDate(),
+        end: moment(`${slot.date}T${slot.end_time}`).toDate(),
         type: 'busy-slot',
         resource: slot
       }));
@@ -282,12 +282,12 @@ const PractitionerProfile = () => {
       const appointmentsData = appointmentsResponse.data;
       // Convert appointments to calendar events format
       const calendarEvents = appointmentsData.map(appointment => {
-        const dateStr = appointment.appointment_date.split('T')[0];
+        const dateStr = moment(appointment.appointment_date).format('YYYY-MM-DD');
         return {
           id: appointment.appointment_id,
           title: `${appointment.patient_first_name} ${appointment.patient_last_name} - ${appointment.treatment_type || 'Appointment'}`,
-          start: new Date(`${dateStr}T${appointment.start_time}`),
-          end: new Date(`${dateStr}T${appointment.end_time}`),
+          start: moment(`${dateStr}T${appointment.start_time}`).toDate(),
+          end: moment(`${dateStr}T${appointment.end_time}`).toDate(),
           resource: appointment,
           type: 'appointment'
         }
@@ -329,7 +329,7 @@ const PractitionerProfile = () => {
 
     // Convert appointments to busy slot format
     const appointmentSlots = appointmentsData.map(appointment => ({
-      date: appointment.resource.appointment_date.split('T')[0],
+      date: moment(appointment.resource.appointment_date).format('YYYY-MM-DD'),
       start_time: appointment.resource.start_time,
       end_time: appointment.resource.end_time,
       slot_id: `appointment-${appointment.appointment_id}`,
@@ -399,31 +399,39 @@ const PractitionerProfile = () => {
           const availableSlots = [];
 
           // Define working hours for this day (using practitioner's configured times)
-          const workingStart = new Date(eventDate);
-          workingStart.setHours(workingDuration.start.getHours(), workingDuration.start.getMinutes(), 0, 0);
+          const workingStart = moment(eventDate).set({
+            hour: workingDuration.start.getHours(),
+            minute: workingDuration.start.getMinutes(),
+            second: 0,
+            millisecond: 0
+          }).toDate();
 
-          const workingEnd = new Date(eventDate);
-          workingEnd.setHours(workingDuration.end.getHours(), workingDuration.end.getMinutes(), 0, 0);
+          const workingEnd = moment(eventDate).set({
+            hour: workingDuration.end.getHours(),
+            minute: workingDuration.end.getMinutes(),
+            second: 0,
+            millisecond: 0
+          }).toDate();
 
           // If no busy slots for this day, mark entire working day as available
           if (dayBusySlots.length === 0) {
             availableSlots.push({
-              start: workingStart,
-              end: workingEnd
+              start: moment(workingStart).toDate(),
+              end: moment(workingEnd).toDate()
             });
           } else {
             // Find gaps between busy slots within working hours
             let currentTime = new Date(workingStart);
 
             dayBusySlots.forEach(busySlot => {
-              const busyStart = new Date(`${dateString}T${busySlot.start_time}`);
-              const busyEnd = new Date(`${dateString}T${busySlot.end_time}`);
+              const busyStart = moment(`${dateString}T${busySlot.start_time}`).toDate();
+              const busyEnd = moment(`${dateString}T${busySlot.end_time}`).toDate();
 
               // If there's a gap before this busy slot, add it as available
               if (currentTime < busyStart) {
                 availableSlots.push({
-                  start: new Date(currentTime),
-                  end: new Date(busyStart)
+                  start: moment(currentTime).toDate(),
+                  end: moment(busyStart).toDate()
                 });
               }
 
@@ -434,8 +442,8 @@ const PractitionerProfile = () => {
             // Add remaining time after last busy slot if within working hours
             if (currentTime < workingEnd) {
               availableSlots.push({
-                start: new Date(currentTime),
-                end: new Date(workingEnd)
+                start: moment(currentTime).toDate(),
+                end: moment(workingEnd).toDate()
               });
             }
           }
@@ -452,8 +460,8 @@ const PractitionerProfile = () => {
             events.push({
               id: `available-${week}-${dayIndex}-${index}-${eventDate.getTime()}`,
               title: 'Available',
-              start: slot.start,
-              end: slot.end,
+              start: moment(slot.start).toDate(),
+              end: moment(slot.end).toDate(),
               type: 'working-hours',
               resource: {
                 day: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayIndex],
@@ -482,8 +490,8 @@ const PractitionerProfile = () => {
             leaveDayEvents.push({
               id: `leave-${dayName}-${week}-${eventDate.getTime()}`,
               title: `Leave Day (${dayName})`,
-              start: new Date(eventDate.setHours(0, 0, 0, 0)),
-              end: new Date(eventDate.setHours(23, 59, 59, 999)),
+              start: moment(eventDate).set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).toDate(),
+              end: moment(eventDate).set({ hour: 23, minute: 59, second: 59, millisecond: 999 }).toDate(),
               type: 'leave-day',
               resource: { day: dayName, date: eventDate.toISOString().split('T')[0] }
             });

@@ -72,7 +72,6 @@ router.post(
         [therapyId]
       );
 
-      // Check if sufficient stock is available
       const insufficientItems = requiredItems.filter(
         (item) => !item.available_qty || item.available_qty < item.required_qty
       );
@@ -251,6 +250,9 @@ router.post(
           staff: assignedStaff
         });
       }
+
+      console.log(`Created treatment plan ${treatmentPlanId} with ${treatmentSessions.length} sessions`);
+      console.log(JSON.stringify(treatmentSessions));
 
       res.status(201).json({
         message: "Treatment plan and sessions created successfully",
