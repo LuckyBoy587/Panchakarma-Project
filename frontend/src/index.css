@@ -156,6 +156,96 @@ code {
 .appointment-event:hover {
   opacity: 1 !important;
 }
+/* Theme variables and utilities */
+:root {
+  --bg: 255 255 255; /* uses RGB for easier opacity usage */
+  --surface: 249 250 251;
+  --muted: 107 114 128;
+  --text: 17 24 39;
+  --primary: 59 130 246;
+  --primary-600: 37 99 235;
+  --accent: 16 185 129;
+  --danger: 239 68 68;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: 17 24 39;
+    --surface: 30 41 59;
+    --muted: 148 163 184;
+    --text: 243 244 246;
+    --primary: 96 165 250;
+    --primary-600: 59 130 246;
+    --accent: 52 211 153;
+    --danger: 248 113 113;
+  }
+}
+
+/* Allow explicit override via data-theme attribute (set by JS). These come after prefers-color-scheme so they win when present. */
+[data-theme="dark"] {
+  --bg: 17 24 39;
+  --surface: 30 41 59;
+  --muted: 148 163 184;
+  --text: 243 244 246;
+  --primary: 96 165 250;
+  --primary-600: 59 130 246;
+  --accent: 52 211 153;
+  --danger: 248 113 113;
+}
+
+[data-theme="light"] {
+  --bg: 255 255 255;
+  --surface: 249 250 251;
+  --muted: 107 114 128;
+  --text: 17 24 39;
+  --primary: 59 130 246;
+  --primary-600: 37 99 235;
+  --accent: 16 185 129;
+  --danger: 239 68 68;
+}
+
+/* Utility classes that use variables */
+.bg-app {
+  background-color: rgb(var(--bg));
+}
+.surface {
+  background-color: rgb(var(--surface));
+}
+.text-app {
+  color: rgb(var(--text));
+}
+.text-muted {
+  color: rgb(var(--muted));
+}
+.btn-primary {
+  background-color: rgb(var(--primary));
+  color: white;
+}
+.btn-primary:hover {
+  background-color: rgb(var(--primary-600));
+}
+.badge-accent {
+  background-color: rgb(var(--accent));
+  color: white;
+}
+.text-danger {
+  color: rgb(var(--danger));
+}
+
+/* Theme-aware calendar tweaks */
+.rbc-header {
+  background-color: rgba(var(--surface), 0.9);
+  color: rgb(var(--text));
+}
+.rbc-toolbar button {
+  background-color: transparent;
+  color: rgb(var(--text));
+  border-color: rgba(var(--muted), 0.15);
+}
+.rbc-toolbar button.rbc-active {
+  background-color: rgb(var(--primary));
+  color: white;
+}
 @media (max-width: 768px) {
   /* Navbar adjustments */
   .navbar-links {

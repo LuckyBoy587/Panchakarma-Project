@@ -16,7 +16,7 @@ router.post("/register", async (req, res) => {
     const pool = getPool();
 
     // Validate user type
-    const validUserTypes = ["patient", "practitioner", "admin", "staff"];
+    const validUserTypes = ["patient", "practitioner", "therapist", "admin", "staff"];
     if (!validUserTypes.includes(userType)) {
       return res.status(400).json({ error: "Invalid user type" });
     }

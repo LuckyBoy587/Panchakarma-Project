@@ -9,6 +9,7 @@ const { initializeDatabase } = require("./db");
 const authRoutes = require("./routes/auth");
 const patientRoutes = require("./routes/patients");
 const practitionerRoutes = require("./routes/practitioners");
+const therapistRoutes = require("./routes/therapists");
 const appointmentRoutes = require("./routes/appointments");
 const treatmentPlanRoutes = require("./routes/treatmentPlans");
 const staffRoutes = require("./routes/staff");
@@ -16,6 +17,7 @@ const uploadRoutes = require("./routes/uploads");
 const slotRoutes = require("./routes/slots");
 const healthRoutes = require("./routes/health");
 const therapiesRoutes = require("./routes/therapies");
+const schedulerRoutes = require("./routes/scheduler");
 
 // Load environment variables
 dotenv.config();
@@ -41,6 +43,7 @@ app.use(limiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/practitioners", practitionerRoutes);
+app.use("/api/therapists", therapistRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/treatment-plans", treatmentPlanRoutes);
 app.use("/api/staff", staffRoutes);
@@ -48,6 +51,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/slots", slotRoutes);
 app.use("/api/health", healthRoutes);
 app.use("/api/therapies", therapiesRoutes);
+app.use("/api/scheduler", schedulerRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

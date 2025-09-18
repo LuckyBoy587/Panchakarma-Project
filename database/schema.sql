@@ -2,7 +2,8 @@
 -- MySQL Database Setup
 
 -- Create database
-CREATE DATABASE IF NOT EXISTS panchakarma_db;
+DROP DATABASE IF EXISTS panchakarma_db;
+CREATE DATABASE panchakarma_db;
 USE panchakarma_db;
 
 -- Users Table
@@ -11,7 +12,7 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     phone VARCHAR(20) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    user_type ENUM('patient', 'practitioner', 'admin', 'staff') NOT NULL,
+    user_type ENUM('patient', 'practitioner', 'therapist', 'admin', 'staff') NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     is_active BOOLEAN DEFAULT true,
@@ -26,9 +27,10 @@ CREATE TABLE users (
 );
 
 -- Patients Table
+-- Patients Table
+-- patient_id is the same as the corresponding users.user_id for patient accounts
 CREATE TABLE patients (
     patient_id VARCHAR(36) PRIMARY KEY,
-    user_id VARCHAR(36) NOT NULL,
     date_of_birth DATE NOT NULL,
     gender ENUM('male', 'female', 'other') NOT NULL,
     blood_group VARCHAR(5) NULL,
@@ -47,17 +49,60 @@ CREATE TABLE patients (
     lifestyle_habits TEXT NULL,
     dietary_preferences TEXT NULL,
     exercise_routine TEXT NULL,
+    -- New structured fields requested by user
+    contact_number VARCHAR(20) NULL,
+    email_address VARCHAR(255) NULL,
+    address TEXT NULL,
+    full_name VARCHAR(255) NULL,
+    age INT NULL,
+    -- Medical history detailed fields (kept as text for flexibility)
+    existing_health_conditions TEXT NULL,
+    past_surgeries_major_illnesses TEXT NULL,
+    allergies_detailed TEXT NULL,
+    current_medications_detailed TEXT NULL,
+    family_medical_history_detailed TEXT NULL,
+    -- Lifestyle (Ayurveda focused)
+    diet_pattern ENUM('veg','non-veg','mixed') NULL,
+    sleep_pattern ENUM('good','disturbed','insomnia') NULL,
+    daily_routine ENUM('sedentary','moderately_active','active') NULL,
+    stress_level ENUM('low','moderate','high') NULL,
+    addiction_history TEXT NULL,
     prakriti_assessment JSON NULL,
     vikriti_assessment JSON NULL,
     dosha_dominance VARCHAR(20) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    FOREIGN KEY (patient_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- Practitioners Table
 CREATE TABLE practitioners (
     practitioner_id VARCHAR(36) PRIMARY KEY,
+    license_number VARCHAR(100) UNIQUE NOT NULL,
+    qualification VARCHAR(500) NOT NULL,
+    specializations JSON NOT NULL,
+    experience_years INT NOT NULL,
+    languages_spoken JSON NOT NULL,
+    consultation_fee DECIMAL(10,2) NOT NULL,
+    clinic_affiliation VARCHAR(200) NULL,
+    practice_start_date DATE NOT NULL,
+    bio TEXT NULL,
+    verification_status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
+    verification_documents JSON NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    leave_days JSON NULL,
+    consultation_duration INT DEFAULT 30,
+    max_patients_per_day INT DEFAULT 20,
+    emergency_availability BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (practitioner_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- Therapists Table
+CREATE TABLE therapists (
+    therapist_id VARCHAR(36) PRIMARY KEY,
     user_id VARCHAR(36) NOT NULL,
     license_number VARCHAR(100) UNIQUE NOT NULL,
     qualification VARCHAR(500) NOT NULL,
@@ -85,7 +130,8 @@ CREATE TABLE practitioners (
 CREATE TABLE appointments (
     appointment_id VARCHAR(36) PRIMARY KEY,
     patient_id VARCHAR(36) NOT NULL,
-    practitioner_id VARCHAR(36) NOT NULL,
+    practitioner_id VARCHAR(36) NULL,
+    therapist_id VARCHAR(36) NULL,
     appointment_date DATE NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
@@ -106,14 +152,16 @@ CREATE TABLE appointments (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
-    FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id)
+    FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id),
+    FOREIGN KEY (therapist_id) REFERENCES therapists(therapist_id)
 );
 
 -- Treatment Plans Table
+DROP TABLE IF EXISTS treatment_plans;
 CREATE TABLE treatment_plans (
     treatment_plan_id VARCHAR(36) PRIMARY KEY,
     patient_id VARCHAR(36) NOT NULL,
-    practitioner_id VARCHAR(36) NOT NULL,
+    practitioner_id VARCHAR(36) NULL,
     treatment_name VARCHAR(200) NOT NULL,
     treatment_type ENUM('panchakarma', 'consultation', 'therapy') NOT NULL,
     start_date DATE NOT NULL,
@@ -127,11 +175,11 @@ CREATE TABLE treatment_plans (
     expected_outcomes TEXT NULL,
     special_instructions TEXT NULL,
     status ENUM('planned', 'active', 'completed', 'paused', 'cancelled') DEFAULT 'planned',
-    total_cost DECIMAL(10,2) NOT NULL,
+    total_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
-    FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE,
+    FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id) ON DELETE SET NULL
 );
 
 -- Treatment Sessions Table
@@ -141,10 +189,13 @@ CREATE TABLE treatment_sessions (
     appointment_id VARCHAR(36) NULL,
     session_number INT NOT NULL,
     session_date DATE NOT NULL,
+    start_time TIME NULL,
+    end_time TIME NULL,
     therapist_id VARCHAR(36) NOT NULL,
+    staff_id VARCHAR(36) NULL,
     procedures_performed JSON NOT NULL,
     oils_medicines_used JSON NULL,
-    duration_minutes INT NOT NULL,
+    duration_minutes INT NOT NULL DEFAULT 60,
     patient_response TEXT NULL,
     side_effects TEXT NULL,
     therapist_notes TEXT NULL,
@@ -156,10 +207,11 @@ CREATE TABLE treatment_sessions (
     session_rating INT CHECK (session_rating >= 1 AND session_rating <= 5),
     status ENUM('scheduled', 'completed', 'cancelled') DEFAULT 'scheduled',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (treatment_plan_id) REFERENCES treatment_plans(treatment_plan_id),
-    FOREIGN KEY (appointment_id) REFERENCES appointments(appointment_id),
-    FOREIGN KEY (therapist_id) REFERENCES practitioners(practitioner_id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (treatment_plan_id) REFERENCES treatment_plans(treatment_plan_id) ON DELETE CASCADE,
+    FOREIGN KEY (appointment_id) REFERENCES appointments(appointment_id) ON DELETE SET NULL,
+    FOREIGN KEY (therapist_id) REFERENCES therapists(therapist_id) ON DELETE CASCADE,
+    FOREIGN KEY (staff_id) REFERENCES users(user_id) ON DELETE SET NULL
 );
 
 -- Notifications Table
@@ -314,7 +366,8 @@ CREATE TABLE rooms (
 -- Slots Table for Doctor Schedule Management
 CREATE TABLE slots (
     slot_id VARCHAR(36) PRIMARY KEY,
-    practitioner_id VARCHAR(36) NOT NULL,
+    practitioner_id VARCHAR(36) NULL,
+    therapist_id VARCHAR(36) NULL,
     date DATE NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
@@ -322,17 +375,19 @@ CREATE TABLE slots (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (practitioner_id) REFERENCES practitioners(practitioner_id) ON DELETE CASCADE,
-    INDEX idx_practitioner_date (practitioner_id, date),
+    FOREIGN KEY (therapist_id) REFERENCES therapists(therapist_id) ON DELETE CASCADE,
+    INDEX idx_provider_date (practitioner_id, therapist_id, date),
     INDEX idx_status (status)
 );
 
 -- Indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_phone ON users(phone);
-CREATE INDEX idx_patients_user_id ON patients(user_id);
-CREATE INDEX idx_practitioners_user_id ON practitioners(user_id);
+-- removed idx_patients_user_id because patients no longer stores a separate user_id column
+-- practitioners now use practitioner_id which is the users.user_id; no separate user_id index required
 CREATE INDEX idx_appointments_patient_id ON appointments(patient_id);
 CREATE INDEX idx_appointments_practitioner_id ON appointments(practitioner_id);
+CREATE INDEX idx_appointments_therapist_id ON appointments(therapist_id);
 CREATE INDEX idx_appointments_date ON appointments(appointment_date);
 CREATE INDEX idx_treatment_plans_patient_id ON treatment_plans(patient_id);
 CREATE INDEX idx_treatment_plans_practitioner_id ON treatment_plans(practitioner_id);
@@ -349,14 +404,36 @@ INSERT INTO users (user_id, email, phone, password_hash, user_type, first_name, 
 ('admin-001', 'admin@panchakarma.com', '+1234567890', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'System', 'Admin', true, true),
 ('prac-001', 'doctor@panchakarma.com', '+1234567891', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'Dr. Meera', 'Nair', true, true),
 ('prac-002', 'doctor2@panchakarma.com', '+1234567895', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'Dr. Ravi', 'Sharma', true, true),
+('ther-001', 'therapist@panchakarma.com', '+1234567896', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'therapist', 'Priya', 'Patel', true, true),
 ('pat-001', 'arjun.sharma@email.com', '+1234567892', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'patient', 'Arjun', 'Sharma', true, true);
 
-INSERT INTO practitioners (practitioner_id, user_id, license_number, qualification, specializations, experience_years, languages_spoken, consultation_fee, clinic_affiliation, practice_start_date, verification_status, start_time, end_time, leave_days, consultation_duration, max_patients_per_day) VALUES
-('prac-profile-001', 'prac-001', 'AYU-KL-12345', 'BAMS, MD Panchakarma', '["Panchakarma", "Ayurveda"]', 12, '["English", "Malayalam", "Hindi"]', 1500.00, 'Holistic Wellness Center', '2012-06-01', 'verified', '09:00', '17:00', '["sunday"]', 45, 16),
-('prac-profile-002', 'prac-002', 'AYU-KL-67890', 'BAMS, MD Ayurveda', '["Ayurveda", "Yoga Therapy"]', 8, '["English", "Hindi"]', 1200.00, 'Ayurvedic Healing Clinic', '2016-03-15', 'verified', '10:00', '16:00', '["sunday"]', 30, 12);
+INSERT INTO practitioners (practitioner_id, license_number, qualification, specializations, experience_years, languages_spoken, consultation_fee, clinic_affiliation, practice_start_date, verification_status, start_time, end_time, leave_days, consultation_duration, max_patients_per_day) VALUES
+('prac-001', 'AYU-KL-12345', 'BAMS, MD Panchakarma', '["Panchakarma", "Ayurveda"]', 12, '["English", "Malayalam", "Hindi"]', 1500.00, 'Holistic Wellness Center', '2012-06-01', 'verified', '09:00', '17:00', '["sunday"]', 45, 16),
+('prac-002', 'AYU-KL-67890', 'BAMS, MD Ayurveda', '["Ayurveda", "Yoga Therapy"]', 8, '["English", "Hindi"]', 1200.00, 'Ayurvedic Healing Clinic', '2016-03-15', 'verified', '10:00', '16:00', '["sunday"]', 30, 12);
 
-INSERT INTO patients (patient_id, user_id, date_of_birth, gender, blood_group, height_cm, weight_kg, occupation, marital_status, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, medical_conditions, allergies, current_medications, dosha_dominance) VALUES
-('pat-profile-001', 'pat-001', '1985-07-15', 'male', 'O+', 175, 78.5, 'Software Engineer', 'married', 'Priya Sharma', '+1234567893', 'Spouse', 'Hypertension, Chronic stress', 'Pollen, Dust mites', 'Amlodipine 5mg daily', 'Pitta');
+INSERT INTO therapists (therapist_id, user_id, license_number, qualification, specializations, experience_years, languages_spoken, consultation_fee, clinic_affiliation, practice_start_date, verification_status, start_time, end_time, leave_days, consultation_duration, max_patients_per_day) VALUES
+('ther-profile-001', 'ther-001', 'TH-KL-12345', 'Certified Ayurvedic Therapist', '["Massage", "Yoga Therapy"]', 5, '["English", "Hindi"]', 800.00, 'Holistic Wellness Center', '2019-01-15', 'verified', '08:00', '16:00', '["sunday"]', 60, 8);
+
+INSERT INTO patients (patient_id, date_of_birth, gender, blood_group, height_cm, weight_kg, occupation, marital_status, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship, medical_conditions, allergies, current_medications, dosha_dominance) VALUES
+('pat-001', '1985-07-15', 'male', 'O+', 175, 78.5, 'Software Engineer', 'married', 'Priya Sharma', '+1234567893', 'Spouse', 'Hypertension, Chronic stress', 'Pollen, Dust mites', 'Amlodipine 5mg daily', 'Pitta');
+
+-- Migration statements: If you have an existing DB, run the following ALTER TABLE statements
+-- to add the new columns without dropping existing data.
+-- ALTER TABLE patients ADD COLUMN contact_number VARCHAR(20) NULL;
+-- ALTER TABLE patients ADD COLUMN email_address VARCHAR(255) NULL;
+-- ALTER TABLE patients ADD COLUMN address TEXT NULL;
+-- ALTER TABLE patients ADD COLUMN full_name VARCHAR(255) NULL;
+-- ALTER TABLE patients ADD COLUMN age INT NULL;
+-- ALTER TABLE patients ADD COLUMN existing_health_conditions TEXT NULL;
+-- ALTER TABLE patients ADD COLUMN past_surgeries_major_illnesses TEXT NULL;
+-- ALTER TABLE patients ADD COLUMN allergies_detailed TEXT NULL;
+-- ALTER TABLE patients ADD COLUMN current_medications_detailed TEXT NULL;
+-- ALTER TABLE patients ADD COLUMN family_medical_history_detailed TEXT NULL;
+-- ALTER TABLE patients ADD COLUMN diet_pattern ENUM('veg','non-veg','mixed') NULL;
+-- ALTER TABLE patients ADD COLUMN sleep_pattern ENUM('good','disturbed','insomnia') NULL;
+-- ALTER TABLE patients ADD COLUMN daily_routine ENUM('sedentary','moderately_active','active') NULL;
+-- ALTER TABLE patients ADD COLUMN stress_level ENUM('low','moderate','high') NULL;
+-- ALTER TABLE patients ADD COLUMN addiction_history TEXT NULL;
 
 -- Sample staff user
 INSERT INTO users (user_id, email, phone, password_hash, user_type, first_name, last_name, email_verified, phone_verified) VALUES
@@ -449,5 +526,55 @@ INSERT INTO therapy_required_items (therapy_id, stock_id, quantity) VALUES
 (10, 1, 20),
 (10, 16, 1);
 
--- Create uploads directory (this would be handled by the application)
--- The application should create this directory if it doesn't exist
+-- Sample slots data for therapist
+INSERT INTO slots (slot_id, therapist_id, date, start_time, end_time, status) VALUES
+('slot-ther-001', 'ther-profile-001', '2025-09-11', '08:00', '09:00', 'free'),
+('slot-ther-002', 'ther-profile-001', '2025-09-11', '09:00', '10:00', 'free'),
+('slot-ther-003', 'ther-profile-001', '2025-09-11', '10:00', '11:00', 'free'),
+('slot-ther-004', 'ther-profile-001', '2025-09-11', '11:00', '12:00', 'free'),
+('slot-ther-005', 'ther-profile-001', '2025-09-11', '13:00', '14:00', 'free'),
+('slot-ther-006', 'ther-profile-001', '2025-09-11', '14:00', '15:00', 'free'),
+('slot-ther-007', 'ther-profile-001', '2025-09-11', '15:00', '16:00', 'free'),
+('slot-ther-008', 'ther-profile-001', '2025-09-12', '08:00', '09:00', 'free'),
+('slot-ther-009', 'ther-profile-001', '2025-09-12', '09:00', '10:00', 'free'),
+('slot-ther-010', 'ther-profile-001', '2025-09-12', '10:00', '11:00', 'free'),
+('slot-ther-011', 'ther-profile-001', '2025-09-12', '11:00', '12:00', 'free'),
+('slot-ther-012', 'ther-profile-001', '2025-09-12', '13:00', '14:00', 'free'),
+('slot-ther-013', 'ther-profile-001', '2025-09-12', '14:00', '15:00', 'free'),
+('slot-ther-014', 'ther-profile-001', '2025-09-12', '15:00', '16:00', 'free');
+
+-- Sample stock data
+INSERT INTO stock (id, item_name, quantity, unit, updated_by) VALUES
+('stock-001', 'Sesame Oil', 1000, 'ml', 'staff-001'),
+('stock-002', 'Coconut Oil', 500, 'ml', 'staff-001'),
+('stock-003', 'Castor Oil', 200, 'ml', 'staff-001'),
+('stock-004', 'Ghee', 300, 'g', 'staff-001'),
+('stock-005', 'Medicated Powder', 150, 'g', 'staff-001'),
+('stock-006', 'Medicated Paste', 100, 'g', 'staff-001'),
+('stock-007', 'Herbal Decoction', 400, 'ml', 'staff-001'),
+('stock-008', 'Buttermilk', 2000, 'ml', 'staff-001'),
+('stock-009', 'Milk', 1000, 'ml', 'staff-001'),
+('stock-010', 'Honey', 500, 'ml', 'staff-001'),
+('stock-011', 'Lemon Juice', 300, 'ml', 'staff-001'),
+('stock-012', 'Therapy Bed', 5, 'piece', 'staff-001'),
+('stock-013', 'Shirodhara Pot', 3, 'piece', 'staff-001'),
+('stock-014', 'Steam Chamber', 2, 'piece', 'staff-001'),
+('stock-015', 'Massage Table', 4, 'piece', 'staff-001'),
+('stock-016', 'Towels', 50, 'piece', 'staff-001'),
+('stock-017', 'Cotton', 200, 'g', 'staff-001'),
+('stock-018', 'Cloth Strips', 100, 'piece', 'staff-001'),
+('stock-019', 'Blanket', 10, 'piece', 'staff-001'),
+('stock-020', 'Earthen Pot', 5, 'piece', 'staff-001'),
+('stock-021', 'Copper Vessel', 3, 'piece', 'staff-001'),
+('stock-022', 'Mortar and Pestle', 2, 'piece', 'staff-001'),
+('stock-023', 'Oil Heating Pan', 2, 'piece', 'staff-001'),
+('stock-024', 'Colonic Equipment', 1, 'set', 'staff-001'),
+('stock-025', 'Neti Pot', 5, 'piece', 'staff-001'),
+('stock-026', 'Eye Cup', 10, 'piece', 'staff-001'),
+('stock-027', 'Medicated Rice', 300, 'g', 'staff-001'),
+('stock-028', 'Herbal Leaves', 150, 'g', 'staff-001'),
+('stock-029', 'Herbal Poultice (Pinda)', 20, 'piece', 'staff-001'),
+('stock-030', 'Incense Sticks', 100, 'piece', 'staff-001');
+
+-- Tables have been recreated with correct structure above
+-- No additional ALTER TABLE statements needed

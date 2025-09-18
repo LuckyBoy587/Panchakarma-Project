@@ -10,6 +10,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import PatientProfile from './pages/PatientProfile';
 import PractitionerProfile from './pages/PractitionerProfile';
+import TherapistProfile from './pages/TherapistProfile';
 import Appointments from './pages/Appointments';
 import TreatmentPlans from './pages/TreatmentPlans';
 import AdminPanel from './pages/AdminPanel';
@@ -20,7 +21,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-  const { user, loading } = useAuth();
+  const { user, userType, loading } = useAuth();
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
@@ -30,7 +31,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.userType)) {
+  if (allowedRoles.length > 0 && !allowedRoles.includes(userType)) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -41,7 +42,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-app text-app">
           <Navbar />
           <main className="container mx-auto px-4 py-8">
             <Routes>
@@ -72,6 +73,14 @@ function App() {
                 }
               />
               <Route
+                path="/therapist-profile"
+                element={
+                  <ProtectedRoute allowedRoles={['therapist', 'admin']}>
+                    <TherapistProfile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/appointments"
                 element={
                   <ProtectedRoute>
@@ -82,7 +91,7 @@ function App() {
               <Route
                 path="/treatment-plans"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowedRoles={['patient', 'practitioner', 'admin', 'staff']}>
                     <TreatmentPlans />
                   </ProtectedRoute>
                 }
@@ -107,8 +116,8 @@ function App() {
             </Routes>
           </main>
           <ToastContainer
-            position="top-right"
-            autoClose={5000}
+            position="bottom-right"
+            autoClose={500}
             hideProgressBar={false}
             newestOnTop={false}
             closeOnClick
@@ -116,6 +125,7 @@ function App() {
             pauseOnFocusLoss
             draggable
             pauseOnHover
+            toastClassName="modern-toast"
           />
         </div>
       </Router>
