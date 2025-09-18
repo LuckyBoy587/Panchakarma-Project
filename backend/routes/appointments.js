@@ -4,6 +4,7 @@ const { getPool } = require("../db");
 const { authenticateToken } = require("../middleware/auth");
 
 const router = express.Router();
+const { sendEmail } = require("../mail-sender");
 
 // Get appointments
 router.get("/", authenticateToken, async (req, res) => {
@@ -201,6 +202,76 @@ router.post("/", authenticateToken, async (req, res) => {
       `SELECT * FROM appointments WHERE appointment_id = ?`,
       [appointmentId]
     );
+
+    // Send email notification to patient
+    try {
+      // fetch patient email
+      const [patientUserRows] = await pool.execute(
+        `SELECT u.email, u.first_name, u.last_name FROM users u WHERE u.user_id = ?`,
+        [patient[0].patient_id]
+      );
+
+      let patientEmail = patientUserRows.length > 0 ? patientUserRows[0].email : null;
+      let patientName = patientUserRows.length > 0 ? `${patientUserRows[0].first_name} ${patientUserRows[0].last_name}` : '';
+
+      // determine provider display name
+      let providerName = 'Panchakarma Clinic';
+      if (practitionerId) {
+        const [prRows] = await pool.execute(
+          `SELECT u.first_name, u.last_name FROM practitioners prac JOIN users u ON prac.practitioner_id = u.user_id WHERE prac.practitioner_id = ?`,
+          [practitionerId]
+        );
+        if (prRows.length > 0) providerName = `${prRows[0].first_name} ${prRows[0].last_name}`;
+      } else if (therapistId) {
+        const [trRows] = await pool.execute(
+          `SELECT u.first_name, u.last_name FROM therapists ther JOIN users u ON ther.user_id = u.user_id WHERE ther.therapist_id = ?`,
+          [therapistId]
+        );
+        if (trRows.length > 0) providerName = `${trRows[0].first_name} ${trRows[0].last_name}`;
+      }
+
+      if (patientEmail) {
+        const appt = newAppointment[0];
+        const apptDate = appt.appointment_date ? new Date(appt.appointment_date).toLocaleDateString() : appt.appointment_date;
+        const start = appt.start_time || '';
+        const end = appt.end_time || '';
+
+        const subject = `Appointment booked: ${apptDate} ${start}`;
+        const text = `Hello ${patientName || 'Patient'},\n\nYour appointment has been booked successfully. Here are the details:\n\n- Date: ${apptDate}\n- Time: ${start} - ${end}\n- Service: ${appt.service_type || ''}\n- Provider: ${providerName}\n- Location/Type: ${appt.consultation_type || ''}\n- Confirmation code: ${appt.confirmation_code || ''}\n\nIf you need to change or cancel this appointment, please contact us or use the app.\n\nThank you,\nPanchakarma Clinic`;
+
+        sendEmail(patientEmail, subject, text);
+      }
+
+      // send email to practitioner only (do not notify therapists)
+      try {
+        if (practitionerId) {
+          const [prUserRows] = await pool.execute(
+            `SELECT u.email, u.first_name, u.last_name FROM practitioners prac JOIN users u ON prac.practitioner_id = u.user_id WHERE prac.practitioner_id = ?`,
+            [practitionerId]
+          );
+          if (prUserRows.length > 0) {
+            const providerEmail = prUserRows[0].email;
+            const providerDisplayName = `${prUserRows[0].first_name} ${prUserRows[0].last_name}`;
+
+            const appt = newAppointment[0];
+            const apptDate = appt.appointment_date ? new Date(appt.appointment_date).toLocaleDateString() : appt.appointment_date;
+            const start = appt.start_time || '';
+            const end = appt.end_time || '';
+
+            const providerSubject = `New appointment: ${apptDate} ${start} - ${providerDisplayName}`;
+            const providerText = `Hello ${providerDisplayName},\n\nA new appointment has been booked. Details:\n\n- Patient: ${patientName || appt.patient_id}\n- Date: ${apptDate}\n- Time: ${start} - ${end}\n- Service: ${appt.service_type || ''}\n- Consultation Type: ${appt.consultation_type || ''}\n- Confirmation code: ${appt.confirmation_code || ''}\n\nPlease review your schedule in the app.\n\nThank you,\nPanchakarma Clinic`;
+
+            sendEmail(providerEmail, providerSubject, providerText);
+          }
+        }
+      } catch (provErr) {
+        console.error('Error sending provider email:', provErr);
+      }
+    } catch (emailErr) {
+      console.error('Error sending appointment email:', emailErr);
+    }
+
+    console.log("New appointment created:", newAppointment[0]);
 
     res.status(201).json({
       message: "Appointment booked successfully",

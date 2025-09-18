@@ -18,6 +18,7 @@ const slotRoutes = require("./routes/slots");
 const healthRoutes = require("./routes/health");
 const therapiesRoutes = require("./routes/therapies");
 const schedulerRoutes = require("./routes/scheduler");
+const userPreferencesRoutes = require("./routes/userPreferences");
 
 // Load environment variables
 dotenv.config();
@@ -52,6 +53,7 @@ app.use("/api/slots", slotRoutes);
 app.use("/api/health", healthRoutes);
 app.use("/api/therapies", therapiesRoutes);
 app.use("/api/scheduler", schedulerRoutes);
+app.use("/api/user-preferences", userPreferencesRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

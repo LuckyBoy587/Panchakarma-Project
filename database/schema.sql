@@ -296,18 +296,10 @@ CREATE TABLE billing (
 
 -- User Preferences Table
 CREATE TABLE user_preferences (
-    preference_id VARCHAR(36) PRIMARY KEY,
-    user_id VARCHAR(36) NOT NULL,
-    notification_preferences JSON NOT NULL,
-    communication_language VARCHAR(10) DEFAULT 'en',
-    timezone VARCHAR(50) DEFAULT 'UTC',
-    do_not_disturb_start TIME NULL,
-    do_not_disturb_end TIME NULL,
-    appointment_reminder_time INT DEFAULT 120,
-    marketing_communications BOOLEAN DEFAULT false,
-    data_sharing_consent BOOLEAN DEFAULT false,
+    user_id VARCHAR(36) PRIMARY KEY,
+    notify_before INT NOT NULL DEFAULT 30,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
@@ -402,10 +394,10 @@ CREATE INDEX idx_therapy_required_items_stock_id ON therapy_required_items(stock
 -- Sample data insertion
 INSERT INTO users (user_id, email, phone, password_hash, user_type, first_name, last_name, email_verified, phone_verified) VALUES
 ('admin-001', 'admin@panchakarma.com', '+1234567890', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'System', 'Admin', true, true),
-('prac-001', 'doctor@panchakarma.com', '+1234567891', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'Dr. Meera', 'Nair', true, true),
+('prac-001', '727723euit108@skcet.ac.in', '+1234567891', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'Dr. Meera', 'Nair', true, true),
 ('prac-002', 'doctor2@panchakarma.com', '+1234567895', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'practitioner', 'Dr. Ravi', 'Sharma', true, true),
 ('ther-001', 'therapist@panchakarma.com', '+1234567896', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'therapist', 'Priya', 'Patel', true, true),
-('pat-001', 'arjun.sharma@email.com', '+1234567892', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'patient', 'Arjun', 'Sharma', true, true);
+('pat-001', 'kowshi587@gmail.com', '+1234567892', '$2a$12$PVnNS/PEsMLWI0U3mwnTq.8S5qrWgsLiJSfIUP7wB1Wc1Z0U6rsCS', 'patient', 'Arjun', 'Sharma', true, true);
 
 INSERT INTO practitioners (practitioner_id, license_number, qualification, specializations, experience_years, languages_spoken, consultation_fee, clinic_affiliation, practice_start_date, verification_status, start_time, end_time, leave_days, consultation_duration, max_patients_per_day) VALUES
 ('prac-001', 'AYU-KL-12345', 'BAMS, MD Panchakarma', '["Panchakarma", "Ayurveda"]', 12, '["English", "Malayalam", "Hindi"]', 1500.00, 'Holistic Wellness Center', '2012-06-01', 'verified', '09:00', '17:00', '["sunday"]', 45, 16),

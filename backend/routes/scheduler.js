@@ -4,6 +4,7 @@ const { getPool } = require("../db");
 const { authenticateToken, authorizeRoles } = require("../middleware/auth");
 
 const router = express.Router();
+const { sendEmail } = require("../mail-sender");
 
 // Helper function to generate time slots
 function generateTimeSlots(startTime, endTime, intervalMinutes) {
@@ -72,7 +73,6 @@ router.post(
         [therapyId]
       );
 
-      // Check if sufficient stock is available
       const insufficientItems = requiredItems.filter(
         (item) => !item.available_qty || item.available_qty < item.required_qty
       );
@@ -250,6 +250,83 @@ router.post(
           therapist: `${assignedTherapist.first_name} ${assignedTherapist.last_name}`,
           staff: assignedStaff
         });
+      }
+
+      console.log(`Created treatment plan ${treatmentPlanId} with ${treatmentSessions.length} sessions`);
+      console.log(JSON.stringify(treatmentSessions));
+      // Fetch patient details (email, name)
+      let patientEmail = null;
+      let patientName = null;
+      try {
+        const [patientRows] = await pool.execute(
+          `SELECT p.*, u.email, u.first_name, u.last_name FROM patients p JOIN users u ON p.patient_id = u.user_id WHERE p.patient_id = ?`,
+          [patientId]
+        );
+
+        if (patientRows.length > 0) {
+          patientEmail = patientRows[0].email;
+          patientName = `${patientRows[0].first_name || ""} ${patientRows[0].last_name || ""}`.trim();
+        }
+      } catch (e) {
+        console.error("Failed to fetch patient details for email:", e);
+      }
+
+      // Fetch practitioner name
+      let practitionerName = null;
+      try {
+        const [prRows] = await pool.execute(
+          `SELECT u.first_name, u.last_name FROM practitioners p JOIN users u ON p.practitioner_id = u.user_id WHERE p.practitioner_id = ?`,
+          [practitionerId]
+        );
+        if (prRows.length > 0) {
+          practitionerName = `${prRows[0].first_name || ""} ${prRows[0].last_name || ""}`.trim();
+        }
+      } catch (e) {
+        console.error("Failed to fetch practitioner details for email:", e);
+      }
+
+      // Compose plain-text email
+      const planLines = [];
+      planLines.push(`Hello ${patientName || 'Patient'},`);
+      planLines.push('');
+      planLines.push('Your treatment plan has been created. Below are the details:');
+      planLines.push('');
+      planLines.push(`Treatment Plan ID: ${treatmentPlanId}`);
+      planLines.push(`Treatment: ${therapy.name}`);
+      if (practitionerName) planLines.push(`Practitioner: ${practitionerName}`);
+      planLines.push(`Start Date: ${formatDate(new Date(startDate))}`);
+      planLines.push(`End Date: ${endDate}`);
+      planLines.push(`Total Sessions: ${sessions}`);
+      planLines.push('');
+      planLines.push('Scheduled Sessions:');
+      treatmentSessions.forEach((s) => {
+        planLines.push(`  ${s.sessionNumber}. ${s.sessionDate} ${s.startTime}-${s.endTime} with ${s.therapist}`);
+      });
+      planLines.push('');
+      if (requiredItems && requiredItems.length > 0) {
+        planLines.push('Required Items and Stock:');
+        requiredItems.forEach((it) => {
+          planLines.push(`  - ${it.name}: required ${it.required_qty}, available ${it.available_qty || 0}`);
+        });
+        planLines.push('');
+      }
+      planLines.push('If you need to reschedule or have questions, please contact the clinic.');
+      planLines.push('');
+      planLines.push('Best regards,');
+      planLines.push('Panchakarma Clinic');
+
+      const emailText = planLines.join('\n');
+
+      // Send email if patient email exists; do not fail the API if email sending fails
+      if (patientEmail) {
+        try {
+          sendEmail(patientEmail, `Your Treatment Plan ${treatmentPlanId}`, emailText);
+          console.log(`Sent treatment plan email to ${patientEmail}`);
+        } catch (e) {
+          console.error(`Failed to send treatment plan email to ${patientEmail}:`, e);
+        }
+      } else {
+        console.warn('No patient email available; skipping email send');
       }
 
       res.status(201).json({
