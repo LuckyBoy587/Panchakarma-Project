@@ -4,7 +4,7 @@ const { getPool } = require("../db");
 const { authenticateToken, authorizeRoles } = require("../middleware/auth");
 
 const router = express.Router();
-const { sendEmail } = require("../mail-sender");
+const { sendEmail, scheduleEmail } = require("../mail-sender");
 
 // Helper function to generate time slots
 function generateTimeSlots(startTime, endTime, intervalMinutes) {
@@ -271,15 +271,17 @@ router.post(
         console.error("Failed to fetch patient details for email:", e);
       }
 
-      // Fetch practitioner name
+      // Fetch practitioner name and email
       let practitionerName = null;
+      let practitionerEmail = null;
       try {
         const [prRows] = await pool.execute(
-          `SELECT u.first_name, u.last_name FROM practitioners p JOIN users u ON p.practitioner_id = u.user_id WHERE p.practitioner_id = ?`,
+          `SELECT u.first_name, u.last_name, u.email FROM practitioners p JOIN users u ON p.practitioner_id = u.user_id WHERE p.practitioner_id = ?`,
           [practitionerId]
         );
         if (prRows.length > 0) {
           practitionerName = `${prRows[0].first_name || ""} ${prRows[0].last_name || ""}`.trim();
+          practitionerEmail = prRows[0].email || null;
         }
       } catch (e) {
         console.error("Failed to fetch practitioner details for email:", e);
@@ -327,6 +329,51 @@ router.post(
         }
       } else {
         console.warn('No patient email available; skipping email send');
+      }
+
+      // Schedule reminder emails 24 hours before each session for patient and practitioner
+      for (const s of treatmentSessions) {
+        try {
+          const sessionDateTime = new Date(`${s.sessionDate}T${s.startTime}`);
+          const reminderTime = new Date(sessionDateTime.getTime() - 24 * 60 * 60 * 1000); // 24 hours before
+
+          const patientReminderText = `Hello ${patientName || 'Patient'},\n\nThis is a reminder for your upcoming session (${therapy.name}) on ${s.sessionDate} at ${s.startTime} with ${s.therapist}.\n\nIf you need to reschedule, please contact the clinic.\n\nBest regards,\nPanchakarma Clinic`;
+
+          const practitionerReminderText = `Hello ${practitionerName || 'Practitioner'},\n\nThis is a reminder of your upcoming session with patient ID ${patientId} for ${therapy.name} on ${s.sessionDate} at ${s.startTime}.\n\nBest regards,\nPanchakarma Clinic`;
+
+          // Patient reminder
+          if (patientEmail) {
+            try {
+              if (reminderTime > new Date()) {
+                scheduleEmail(patientEmail, `Reminder: Session on ${s.sessionDate}`, patientReminderText, reminderTime);
+                console.log(`Scheduled patient reminder for ${patientEmail} at ${reminderTime.toISOString()}`);
+              } else {
+                // If reminder time is past, send immediately
+                sendEmail(patientEmail, `Reminder: Session on ${s.sessionDate}`, patientReminderText);
+                console.log(`Sent immediate patient reminder to ${patientEmail}`);
+              }
+            } catch (e) {
+              console.error(`Failed to schedule/send patient reminder to ${patientEmail}:`, e);
+            }
+          }
+
+          // Practitioner reminder
+          if (practitionerEmail) {
+            try {
+              if (reminderTime > new Date()) {
+                scheduleEmail(practitionerEmail, `Reminder: Session on ${s.sessionDate}`, practitionerReminderText, reminderTime);
+                console.log(`Scheduled practitioner reminder for ${practitionerEmail} at ${reminderTime.toISOString()}`);
+              } else {
+                sendEmail(practitionerEmail, `Reminder: Session on ${s.sessionDate}`, practitionerReminderText);
+                console.log(`Sent immediate practitioner reminder to ${practitionerEmail}`);
+              }
+            } catch (e) {
+              console.error(`Failed to schedule/send practitioner reminder to ${practitionerEmail}:`, e);
+            }
+          }
+        } catch (e) {
+          console.error('Error scheduling reminders for session', s, e);
+        }
       }
 
       res.status(201).json({

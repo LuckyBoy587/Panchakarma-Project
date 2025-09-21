@@ -241,62 +241,57 @@ router.put("/:patientId", authenticateToken, async (req, res) => {
       doshaDominance,
     } = req.body;
 
-    // Helper function to convert undefined to null
+    // Helper function to convert undefined to null (used for inserts)
     const toNull = (value) => value === undefined ? null : value;
 
-    await pool.execute(
-      `UPDATE patients SET
-        date_of_birth = ?, gender = ?, blood_group = ?, height_cm = ?, weight_kg = ?,
-        occupation = ?, marital_status = ?, emergency_contact_name = ?, emergency_contact_phone = ?,
-        emergency_contact_relationship = ?, medical_conditions = ?, allergies = ?, current_medications = ?,
-        past_surgeries = ?, family_medical_history = ?, lifestyle_habits = ?, dietary_preferences = ?,
-        exercise_routine = ?, prakriti_assessment = ?, vikriti_assessment = ?, dosha_dominance = ?,
-        full_name = ?, age = ?, contact_number = ?, email_address = ?, address = ?,
-        existing_health_conditions = ?, past_surgeries_major_illnesses = ?, allergies_detailed = ?,
-        current_medications_detailed = ?, family_medical_history_detailed = ?,
-        diet_pattern = ?, sleep_pattern = ?, daily_routine = ?, stress_level = ?, addiction_history = ?,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE patient_id = ?`,
-      [
-        toNull(dateOfBirth),
-        toNull(gender),
-        toNull(bloodGroup),
-        toNull(height),
-        toNull(weight),
-        toNull(occupation),
-        toNull(maritalStatus),
-        toNull(emergencyContactName),
-        toNull(emergencyContactPhone),
-        toNull(emergencyContactRelationship),
-        toNull(medicalConditions),
-        toNull(allergies),
-        toNull(currentMedications),
-        toNull(pastSurgeries),
-        toNull(familyMedicalHistory),
-        toNull(lifestyleHabits),
-        toNull(dietaryPreferences),
-        toNull(exerciseRoutine),
-        prakritiAssessment ? JSON.stringify(prakritiAssessment) : null,
-        vikritiAssessment ? JSON.stringify(vikritiAssessment) : null,
-        toNull(doshaDominance),
-        toNull(fullName),
-        toNull(age),
-        toNull(contactNumber),
-        toNull(emailAddress),
-        toNull(address),
-        toNull(existingHealthConditions),
-        toNull(pastSurgeriesMajorIllnesses),
-        toNull(allergiesDetailed),
-        toNull(currentMedicationsDetailed),
-        toNull(familyMedicalHistoryDetailed),
-        toNull(dietPattern),
-        toNull(sleepPattern),
-        toNull(dailyRoutine),
-        toNull(stressLevel),
-        toNull(addictionHistory),
-        patientId,
-      ]
-    );
+    // Build dynamic UPDATE so we only modify columns provided in the request body.
+    const setClauses = [];
+    const params = [];
+
+    if (dateOfBirth !== undefined) { setClauses.push('date_of_birth = ?'); params.push(dateOfBirth); }
+    if (gender !== undefined) { setClauses.push('gender = ?'); params.push(gender); }
+    if (bloodGroup !== undefined) { setClauses.push('blood_group = ?'); params.push(bloodGroup); }
+    if (height !== undefined) { setClauses.push('height_cm = ?'); params.push(height); }
+    if (weight !== undefined) { setClauses.push('weight_kg = ?'); params.push(weight); }
+    if (occupation !== undefined) { setClauses.push('occupation = ?'); params.push(occupation); }
+    if (maritalStatus !== undefined) { setClauses.push('marital_status = ?'); params.push(maritalStatus); }
+    if (emergencyContactName !== undefined) { setClauses.push('emergency_contact_name = ?'); params.push(emergencyContactName); }
+    if (emergencyContactPhone !== undefined) { setClauses.push('emergency_contact_phone = ?'); params.push(emergencyContactPhone); }
+    if (emergencyContactRelationship !== undefined) { setClauses.push('emergency_contact_relationship = ?'); params.push(emergencyContactRelationship); }
+    if (medicalConditions !== undefined) { setClauses.push('medical_conditions = ?'); params.push(medicalConditions); }
+    if (allergies !== undefined) { setClauses.push('allergies = ?'); params.push(allergies); }
+    if (currentMedications !== undefined) { setClauses.push('current_medications = ?'); params.push(currentMedications); }
+    if (pastSurgeries !== undefined) { setClauses.push('past_surgeries = ?'); params.push(pastSurgeries); }
+    if (familyMedicalHistory !== undefined) { setClauses.push('family_medical_history = ?'); params.push(familyMedicalHistory); }
+    if (lifestyleHabits !== undefined) { setClauses.push('lifestyle_habits = ?'); params.push(lifestyleHabits); }
+    if (dietaryPreferences !== undefined) { setClauses.push('dietary_preferences = ?'); params.push(dietaryPreferences); }
+    if (exerciseRoutine !== undefined) { setClauses.push('exercise_routine = ?'); params.push(exerciseRoutine); }
+    if (prakritiAssessment !== undefined) { setClauses.push('prakriti_assessment = ?'); params.push(prakritiAssessment ? JSON.stringify(prakritiAssessment) : null); }
+    if (vikritiAssessment !== undefined) { setClauses.push('vikriti_assessment = ?'); params.push(vikritiAssessment ? JSON.stringify(vikritiAssessment) : null); }
+    if (doshaDominance !== undefined) { setClauses.push('dosha_dominance = ?'); params.push(doshaDominance); }
+    if (fullName !== undefined) { setClauses.push('full_name = ?'); params.push(fullName); }
+    if (age !== undefined) { setClauses.push('age = ?'); params.push(age); }
+    if (contactNumber !== undefined) { setClauses.push('contact_number = ?'); params.push(contactNumber); }
+    if (emailAddress !== undefined) { setClauses.push('email_address = ?'); params.push(emailAddress); }
+    if (address !== undefined) { setClauses.push('address = ?'); params.push(address); }
+    if (existingHealthConditions !== undefined) { setClauses.push('existing_health_conditions = ?'); params.push(existingHealthConditions); }
+    if (pastSurgeriesMajorIllnesses !== undefined) { setClauses.push('past_surgeries_major_illnesses = ?'); params.push(pastSurgeriesMajorIllnesses); }
+    if (allergiesDetailed !== undefined) { setClauses.push('allergies_detailed = ?'); params.push(allergiesDetailed); }
+    if (currentMedicationsDetailed !== undefined) { setClauses.push('current_medications_detailed = ?'); params.push(currentMedicationsDetailed); }
+    if (familyMedicalHistoryDetailed !== undefined) { setClauses.push('family_medical_history_detailed = ?'); params.push(familyMedicalHistoryDetailed); }
+    if (dietPattern !== undefined) { setClauses.push('diet_pattern = ?'); params.push(dietPattern); }
+    if (sleepPattern !== undefined) { setClauses.push('sleep_pattern = ?'); params.push(sleepPattern); }
+    if (dailyRoutine !== undefined) { setClauses.push('daily_routine = ?'); params.push(dailyRoutine); }
+    if (stressLevel !== undefined) { setClauses.push('stress_level = ?'); params.push(stressLevel); }
+    if (additionHistory !== undefined) { /* legacy typo guard */ }
+    if (addictionHistory !== undefined) { setClauses.push('addiction_history = ?'); params.push(addictionHistory); }
+
+    if (setClauses.length > 0) {
+      setClauses.push('updated_at = CURRENT_TIMESTAMP');
+      const sql = `UPDATE patients SET ${setClauses.join(', ')} WHERE patient_id = ?`;
+      params.push(patientId);
+      await pool.execute(sql, params);
+    }
 
     // Sync personal fields to users table as well
     try {

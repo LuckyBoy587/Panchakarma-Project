@@ -20,6 +20,7 @@ const TreatmentPlans = () => {
     numSessions: '',
     frequency: ''
   });
+  const [dateError, setDateError] = useState('');
 
   useEffect(() => {
     if (userType === 'patient') {
@@ -154,8 +155,28 @@ const TreatmentPlans = () => {
     setShowModal(true);
   };
 
+  const getMinStartDate = () => {
+    if (!selectedPatient || !selectedPatient.appointment_date) return '';
+    // appointment_date is expected in YYYY-MM-DD (or ISO) format
+    const d = new Date(selectedPatient.appointment_date);
+    if (isNaN(d.getTime())) return '';
+    // next day after appointment
+    d.setDate(d.getDate() + 1);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Validate start date against appointment
+    const min = getMinStartDate();
+    if (min && formData.startDate && formData.startDate < min) {
+      setDateError(`Start date must be on or after ${min}`);
+      return;
+    }
+
     console.log('Treatment Plan:', {
       patientId: selectedPatient.patient_id,
       ...formData
@@ -772,10 +793,23 @@ const TreatmentPlans = () => {
                 <input
                   type="date"
                   value={formData.startDate}
-                  onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                  min={getMinStartDate()}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData({...formData, startDate: val});
+                    const min = getMinStartDate();
+                    if (min && val && val < min) {
+                      setDateError(`Start date must be on or after ${min}`);
+                    } else {
+                      setDateError('');
+                    }
+                  }}
                   className="w-full p-2 border rounded"
                   required
                 />
+                {dateError && (
+                  <p className="text-sm text-red-600 mt-1">{dateError}</p>
+                )}
               </div>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2">Number of Sessions</label>
@@ -814,6 +848,7 @@ const TreatmentPlans = () => {
                 <button
                   type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  disabled={!formData.startDate || !!dateError}
                 >
                   Assign
                 </button>
