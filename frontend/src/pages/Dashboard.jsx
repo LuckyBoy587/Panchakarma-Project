@@ -140,7 +140,7 @@ const Dashboard = () => {
     <div className="space-y-8">
       {console.log('Appointments:', recentAppointments)}
       <div>
-        <h1 className="text-3xl font-bold text-app">
+<h1 className="text-2xl sm:text-3xl font-bold text-app">
           Welcome back, {user.firstName}!
         </h1>
         <p className="text-muted mt-2">
@@ -229,29 +229,31 @@ const Dashboard = () => {
           {recentAppointments.length === 0 ? (
             <p className="text-muted text-center py-4">No appointments found</p>
           ) : (
-            <div className="space-y-4">
+<div className="space-y-4">
               {recentAppointments.map((appointment) => (
-                <div key={appointment.appointment_id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0">
-                      <Calendar className="h-8 w-8 text-gray-400" />
+                <div key={appointment.appointment_id} className="p-4 border border-gray-200 rounded-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex-shrink-0">
+                        <Calendar className="h-8 w-8 text-gray-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-app">
+                          {userType === 'patient'
+                            ? `${appointment.provider_first_name} ${appointment.provider_last_name}`
+                            : `${appointment.patient_first_name} ${appointment.patient_last_name}`
+                          }
+                        </p>
+                        <p className="text-sm text-muted">
+                          {new Date(appointment.appointment_date).toLocaleDateString()} at {appointment.start_time}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-app">
-                        {userType === 'patient'
-                          ? `${appointment.provider_first_name} ${appointment.provider_last_name}`
-                          : `${appointment.patient_first_name} ${appointment.patient_last_name}`
-                        }
-                      </p>
-                      <p className="text-sm text-muted">
-                        {new Date(appointment.appointment_date).toLocaleDateString()} at {appointment.start_time}
-                      </p>
+                    <div className="flex items-center sm:justify-end">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(appointment.status)}`}>
+                        {appointment.status}
+                      </span>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(appointment.status)}`}>
-                      {appointment.status}
-                    </span>
                   </div>
                 </div>
               ))}

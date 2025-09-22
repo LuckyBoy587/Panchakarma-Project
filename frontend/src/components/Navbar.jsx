@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Calendar, FileText, Settings, LogOut, Menu, X, Sun, Moon } from 'lucide-react';
+import { User, Calendar, FileText, Settings, LogOut, Menu, X, Sun, Moon, Video } from 'lucide-react';
 
 const Navbar = () => {
   const { user, userType, logout, theme, toggleTheme } = useAuth();
@@ -18,8 +18,8 @@ const Navbar = () => {
   };
 
   if (!user) {
-    return (
-      <nav className="surface shadow-md">
+return (
+      <nav className="surface shadow-md sticky top-0 z-50 border-b border-gray-200">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="text-xl font-bold text-app">
@@ -49,8 +49,8 @@ const Navbar = () => {
 
   const roleHasTreatments = ['patient', 'practitioner', 'admin', 'staff'];
 
-  return (
-    <nav className="surface shadow-md">
+return (
+    <nav className="surface shadow-md sticky top-0 z-50 border-b border-gray-200">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <Link to="/dashboard" className="text-xl font-bold text-app">
@@ -92,6 +92,16 @@ const Navbar = () => {
               >
                 <Calendar size={18} />
                 <span>Appointments</span>
+              </Link>
+            )}
+
+            {userType === 'patient' && (
+              <Link
+                to="/panchakarma-videos"
+                className="flex items-center space-x-1 text-muted hover:text-app"
+              >
+                <Video size={18} />
+                <span>Panchakarma Videos</span>
               </Link>
             )}
 
@@ -176,6 +186,17 @@ const Navbar = () => {
                 >
                   <Calendar size={18} />
                   <span>Appointments</span>
+                </Link>
+              )}
+
+              {userType === 'patient' && (
+                <Link
+                  to="/panchakarma-videos"
+                  className="flex items-center space-x-2 text-muted hover:text-app px-2 py-1 mobile-menu-link"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Video size={18} />
+                  <span>Panchakarma Videos</span>
                 </Link>
               )}
 

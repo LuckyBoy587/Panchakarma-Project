@@ -218,13 +218,13 @@ const PatientProfile = () => {
     );
   }
 
-  return (
-    <div className="flex gap-6">
+return (
+    <div className="flex flex-col md:flex-row gap-6">
       {/* Left vertical nav */}
-      <aside className="w-56">
-        <div className="surface rounded-lg p-4">
+      <aside className="w-full md:w-56">
+        <div className="surface rounded-lg p-3 sm:p-4">
           <h2 className="text-lg font-semibold mb-3">Profile Sections</h2>
-          <nav className="flex flex-col space-y-2">
+          <nav className="flex md:flex-col flex-row md:space-y-2 space-x-2 md:space-x-0 overflow-x-auto">
             <button type="button" onClick={() => setActiveSection('personal')} aria-current={activeSection==='personal' ? 'page' : undefined} className={navBtnClass('personal')}>Personal</button>
             <button type="button" onClick={() => setActiveSection('medical')} aria-current={activeSection==='medical' ? 'page' : undefined} className={navBtnClass('medical')}>Medical History</button>
             <button type="button" onClick={() => setActiveSection('lifestyle')} aria-current={activeSection==='lifestyle' ? 'page' : undefined} className={navBtnClass('lifestyle')}>Ayurveda Lifestyle</button>
@@ -238,9 +238,9 @@ const PatientProfile = () => {
       {/* Main content */}
       <main className="flex-1">
         <div className="space-y-6">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-app">Patient Profile</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-app">Patient Profile</h1>
               <p className="text-muted mt-2">Manage your health information and preferences</p>
             </div>
             <div className="flex items-center">
@@ -250,7 +250,7 @@ const PatientProfile = () => {
             </div>
           </div>
 
-          <div className="surface rounded-lg shadow p-6">
+          <div className="surface rounded-lg shadow p-4 sm:p-6">
             <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
               {/* Personal Section */}
               {activeSection === 'personal' && (
@@ -261,7 +261,7 @@ const PatientProfile = () => {
                       <label className="block text-sm font-medium text-muted">Full Name</label>
                       <input name="fullName" value={formData.fullName} onChange={handleInputChange} className="mt-1 block w-full border rounded-md p-2" />
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <input name="age" value={formData.age} onChange={handleInputChange} placeholder="Age" className="mt-1 block w-full border rounded-md p-2" />
                       <select name="gender" value={formData.gender} onChange={handleInputChange} className="mt-1 block w-full border rounded-md p-2">
                         <option value="">Select gender</option>

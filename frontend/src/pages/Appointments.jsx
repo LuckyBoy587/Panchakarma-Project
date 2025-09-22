@@ -134,7 +134,7 @@ const Appointments = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-app">Appointments</h1>
+<h1 className="text-2xl sm:text-3xl font-bold text-app">Appointments</h1>
         <p className="text-muted mt-2">Book appointments with practitioners and manage your schedule</p>
       </div>
 
@@ -235,10 +235,10 @@ const Appointments = () => {
           </h2>
 
           {userAppointments.length > 0 ? (
-            <div className="space-y-3">
+<div className="space-y-3">
                 {userAppointments.map((appointment) => (
                   <div key={appointment.appointment_id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
                     <div>
                         <p className="font-medium text-app">
                           Dr. {appointment.provider_first_name} {appointment.provider_last_name}

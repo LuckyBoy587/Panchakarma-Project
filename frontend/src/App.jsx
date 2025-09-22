@@ -18,6 +18,7 @@ import StaffDashboard from './pages/StaffDashboard';
 
 // Context
 import { AuthProvider, useAuth } from './context/AuthContext';
+import PanchakarmaRepo from './pages/PanchakarmaVideos';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
@@ -44,7 +45,7 @@ function App() {
       <Router>
         <div className="min-h-screen bg-app text-app">
           <Navbar />
-          <main className="container mx-auto px-4 py-8">
+<main className="container mx-auto px-4 py-8 safe-area-pb">
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
@@ -113,6 +114,7 @@ function App() {
                 }
               />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path='/panchakarma-videos' element={<PanchakarmaRepo />} />
             </Routes>
           </main>
           <ToastContainer
