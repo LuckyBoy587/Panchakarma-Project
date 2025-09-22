@@ -39,8 +39,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-app py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ backgroundImage: `url('/bg.png')`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-md" style={{ WebkitBackdropFilter: 'blur(6px)', backdropFilter: 'blur(6px)' }} aria-hidden="true"></div>
+      <div className="relative z-10 max-w-md w-full space-y-8">
         <div>
 <h2 className="mt-6 text-center text-2xl sm:text-3xl font-extrabold text-app">
             Sign in to your account
@@ -55,7 +56,7 @@ const Login = () => {
             </Link>
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+  <form className="mt-8 space-y-6 bg-white/5 p-6 rounded-lg" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="email" className="sr-only">

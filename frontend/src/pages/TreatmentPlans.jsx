@@ -273,82 +273,74 @@ const TreatmentPlans = () => {
             <div className="p-6">
               <div className="space-y-4">
                 {treatmentSessions.map((session) => (
-                  <div key={session.session_id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-app">{session.treatment_name}</h3>
-                        <p className="text-sm text-muted">Session #{session.session_number}</p>
-                      </div>
-                      <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                        session.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {session.status}
-                      </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        <span>{new Date(session.session_date).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}</span>
-                      </div>
-                      
-                      {session.start_time && session.end_time && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Clock className="h-4 w-4 mr-2" />
-                          <span>{formatTimeToIST(session.start_time)} - {formatTimeToIST(session.end_time)}</span>
+                  <div key={session.session_id} className="flex flex-col md:flex-row md:items-center justify-between border border-gray-200 rounded-lg p-4 hover:shadow transition-shadow bg-white/5">
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-app">{session.treatment_name}</h3>
+                          <p className="text-sm text-muted">Session #{session.session_number}</p>
                         </div>
-                      )}
-                      
-                      <div className="flex items-center text-sm text-gray-600">
-                        <User className="h-4 w-4 mr-2" />
-                        <span>Therapist: {session.therapist_first_name} {session.therapist_last_name}</span>
+                        <div className="hidden md:flex md:flex-col md:items-end md:ml-4">
+                          <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
+                            session.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>{session.status}</span>
+                          {session.start_time && session.end_time && (
+                            <span className="text-xs text-gray-500 mt-2">{formatTimeToIST(session.start_time)} - {formatTimeToIST(session.end_time)}</span>
+                          )}
+                        </div>
                       </div>
-                      
-                      {session.practitioner_first_name && (
-                        <div className="flex items-center text-sm text-gray-600">
+
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          <span>{new Date(session.session_date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                        </div>
+                        <div className="flex items-center">
                           <User className="h-4 w-4 mr-2" />
-                          <span>Practitioner: {session.practitioner_first_name} {session.practitioner_last_name}</span>
+                          <span>Therapist: {session.therapist_first_name} {session.therapist_last_name}</span>
+                        </div>
+                        {session.practitioner_first_name && (
+                          <div className="flex items-center">
+                            <User className="h-4 w-4 mr-2" />
+                            <span>Practitioner: {session.practitioner_first_name} {session.practitioner_last_name}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {session.procedures_performed && (
+                        <div className="mt-3">
+                          <div className="flex flex-wrap gap-2">
+                            {(() => {
+                              try {
+                                const procedures = JSON.parse(session.procedures_performed);
+                                return procedures.map((procedure, index) => (
+                                  <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{procedure}</span>
+                                ));
+                              } catch (e) {
+                                return (
+                                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{session.procedures_performed}</span>
+                                );
+                              }
+                            })()}
+                          </div>
                         </div>
                       )}
                     </div>
-                    
-                    {session.procedures_performed && (
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Procedures:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {(() => {
-                            try {
-                              const procedures = JSON.parse(session.procedures_performed);
-                              return procedures.map((procedure, index) => (
-                                <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                                  {procedure}
-                                </span>
-                              ));
-                            } catch (e) {
-                              return (
-                                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                                  {session.procedures_performed}
-                                </span>
-                              );
-                            }
-                          })()}
-                        </div>
+
+                    <div className="mt-3 md:mt-0 md:ml-4 flex-shrink-0 md:w-48 flex flex-col items-start md:items-end">
+                      <div className="md:hidden mb-2">
+                        <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
+                          session.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>{session.status}</span>
                       </div>
-                    )}
-                    
-                    {session.patient_response && (
-                      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm font-medium text-gray-700">Your Response:</p>
-                        <p className="text-sm text-gray-600 mt-1">{session.patient_response}</p>
-                      </div>
-                    )}
+                      {session.start_time && session.end_time && (
+                        <div className="text-sm text-gray-500">{formatTimeToIST(session.start_time)} - {formatTimeToIST(session.end_time)}</div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -394,102 +386,74 @@ const TreatmentPlans = () => {
             <div className="p-6">
               <div className="space-y-4">
                 {treatmentSessions.map((session) => (
-                  <div key={session.session_id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{session.treatment_name}</h3>
-                        <p className="text-sm text-muted">Session #{session.session_number} - Patient: {session.patient_first_name} {session.patient_last_name}</p>
-                      </div>
-                      <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                        session.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {session.status}
-                      </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        <span>{new Date(session.session_date).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}</span>
-                      </div>
-                      
-                      {session.start_time && session.end_time && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Clock className="h-4 w-4 mr-2" />
-                          <span>{formatTimeToIST(session.start_time)} - {formatTimeToIST(session.end_time)}</span>
+                  <div key={session.session_id} className="flex flex-col md:flex-row md:items-center justify-between border border-gray-200 rounded-lg p-4 hover:shadow transition-shadow bg-white">
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">{session.treatment_name}</h3>
+                          <p className="text-sm text-gray-600">Session #{session.session_number} - Patient: {session.patient_first_name} {session.patient_last_name}</p>
                         </div>
-                      )}
-                      
-                      <div className="flex items-center text-sm text-gray-600">
-                        <User className="h-4 w-4 mr-2" />
-                        <span>Therapist: {session.therapist_first_name} {session.therapist_last_name}</span>
+                        <div className="hidden md:flex md:flex-col md:items-end md:ml-4">
+                          <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
+                            session.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>{session.status}</span>
+                          {session.start_time && session.end_time && (
+                            <span className="text-xs text-gray-500 mt-2">{formatTimeToIST(session.start_time)} - {formatTimeToIST(session.end_time)}</span>
+                          )}
+                        </div>
                       </div>
-                      
-                      {session.practitioner_first_name && (
-                        <div className="flex items-center text-sm text-gray-600">
+
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          <span>{new Date(session.session_date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                        </div>
+                        <div className="flex items-center">
                           <User className="h-4 w-4 mr-2" />
-                          <span>Practitioner: {session.practitioner_first_name} {session.practitioner_last_name}</span>
+                          <span>Therapist: {session.therapist_first_name} {session.therapist_last_name}</span>
+                        </div>
+                        {session.practitioner_first_name && (
+                          <div className="flex items-center">
+                            <User className="h-4 w-4 mr-2" />
+                            <span>Practitioner: {session.practitioner_first_name} {session.practitioner_last_name}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {session.procedures_performed && (
+                        <div className="mt-3">
+                          <div className="flex flex-wrap gap-2">
+                            {(() => {
+                              try {
+                                const procedures = JSON.parse(session.procedures_performed);
+                                return procedures.map((procedure, index) => (
+                                  <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{procedure}</span>
+                                ));
+                              } catch (e) {
+                                return (
+                                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{session.procedures_performed}</span>
+                                );
+                              }
+                            })()}
+                          </div>
                         </div>
                       )}
                     </div>
-                    
-                    {session.procedures_performed && (
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Required Procedures:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {(() => {
-                            try {
-                              const procedures = JSON.parse(session.procedures_performed);
-                              return procedures.map((procedure, index) => (
-                                <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                                  {procedure}
-                                </span>
-                              ));
-                            } catch (e) {
-                              return (
-                                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                                  {session.procedures_performed}
-                                </span>
-                              );
-                            }
-                          })()}
-                        </div>
+
+                    <div className="mt-3 md:mt-0 md:ml-4 flex-shrink-0 md:w-48 flex flex-col items-start md:items-end">
+                      <div className="md:hidden mb-2">
+                        <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
+                          session.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>{session.status}</span>
                       </div>
-                    )}
-                    
-                    {session.oils_medicines_used && (
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Required Items/Medicines:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {(() => {
-                            try {
-                              const items = JSON.parse(session.oils_medicines_used);
-                              return items.map((item, index) => (
-                                <span key={index} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                                  {item}
-                                </span>
-                              ));
-                            } catch (e) {
-                              return null;
-                            }
-                          })()}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {session.therapist_notes && (
-                      <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
-                        <p className="text-sm font-medium text-gray-700">Therapist Notes:</p>
-                        <p className="text-sm text-gray-600 mt-1">{session.therapist_notes}</p>
-                      </div>
-                    )}
+                      {session.start_time && session.end_time && (
+                        <div className="text-sm text-gray-500">{formatTimeToIST(session.start_time)} - {formatTimeToIST(session.end_time)}</div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -576,102 +540,74 @@ const TreatmentPlans = () => {
             ) : (
               <div className="space-y-4">
                 {treatmentSessions.map((session) => (
-                  <div key={session.session_id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{session.treatment_name}</h3>
-                        <p className="text-sm text-gray-600">Session #{session.session_number} - Patient: {session.patient_first_name} {session.patient_last_name}</p>
-                      </div>
-                      <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                        session.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {session.status}
-                      </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        <span>{new Date(session.session_date).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}</span>
-                      </div>
-                      
-                      {session.start_time && session.end_time && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Clock className="h-4 w-4 mr-2" />
-                          <span>{formatTimeToIST(session.start_time)} - {formatTimeToIST(session.end_time)}</span>
+                  <div key={session.session_id} className="flex flex-col md:flex-row md:items-center justify-between border border-gray-200 rounded-lg p-4 hover:shadow transition-shadow bg-white">
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">{session.treatment_name}</h3>
+                          <p className="text-sm text-gray-600">Session #{session.session_number} - Patient: {session.patient_first_name} {session.patient_last_name}</p>
                         </div>
-                      )}
-                      
-                      <div className="flex items-center text-sm text-gray-600">
-                        <User className="h-4 w-4 mr-2" />
-                        <span>Therapist: {session.therapist_first_name} {session.therapist_last_name}</span>
+                        <div className="hidden md:flex md:flex-col md:items-end md:ml-4">
+                          <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
+                            session.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>{session.status}</span>
+                          {session.start_time && session.end_time && (
+                            <span className="text-xs text-gray-500 mt-2">{formatTimeToIST(session.start_time)} - {formatTimeToIST(session.end_time)}</span>
+                          )}
+                        </div>
                       </div>
-                      
-                      {session.practitioner_first_name && (
-                        <div className="flex items-center text-sm text-gray-600">
+
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          <span>{new Date(session.session_date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                        </div>
+                        <div className="flex items-center">
                           <User className="h-4 w-4 mr-2" />
-                          <span>Practitioner: {session.practitioner_first_name} {session.practitioner_last_name}</span>
+                          <span>Therapist: {session.therapist_first_name} {session.therapist_last_name}</span>
+                        </div>
+                        {session.practitioner_first_name && (
+                          <div className="flex items-center">
+                            <User className="h-4 w-4 mr-2" />
+                            <span>Practitioner: {session.practitioner_first_name} {session.practitioner_last_name}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {session.procedures_performed && (
+                        <div className="mt-3">
+                          <div className="flex flex-wrap gap-2">
+                            {(() => {
+                              try {
+                                const procedures = JSON.parse(session.procedures_performed);
+                                return procedures.map((procedure, index) => (
+                                  <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{procedure}</span>
+                                ));
+                              } catch (e) {
+                                return (
+                                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">{session.procedures_performed}</span>
+                                );
+                              }
+                            })()}
+                          </div>
                         </div>
                       )}
                     </div>
-                    
-                    {session.procedures_performed && (
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Required Procedures:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {(() => {
-                            try {
-                              const procedures = JSON.parse(session.procedures_performed);
-                              return procedures.map((procedure, index) => (
-                                <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                                  {procedure}
-                                </span>
-                              ));
-                            } catch (e) {
-                              return (
-                                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                                  {session.procedures_performed}
-                                </span>
-                              );
-                            }
-                          })()}
-                        </div>
+
+                    <div className="mt-3 md:mt-0 md:ml-4 flex-shrink-0 md:w-48 flex flex-col items-start md:items-end">
+                      <div className="md:hidden mb-2">
+                        <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
+                          session.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>{session.status}</span>
                       </div>
-                    )}
-                    
-                    {session.oils_medicines_used && (
-                      <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Required Items/Medicines:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {(() => {
-                            try {
-                              const items = JSON.parse(session.oils_medicines_used);
-                              return items.map((item, index) => (
-                                <span key={index} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                                  {item}
-                                </span>
-                              ));
-                            } catch (e) {
-                              return null;
-                            }
-                          })()}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {session.therapist_notes && (
-                      <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
-                        <p className="text-sm font-medium text-gray-700">Therapist Notes:</p>
-                        <p className="text-sm text-gray-600 mt-1">{session.therapist_notes}</p>
-                      </div>
-                    )}
+                      {session.start_time && session.end_time && (
+                        <div className="text-sm text-gray-500">{formatTimeToIST(session.start_time)} - {formatTimeToIST(session.end_time)}</div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

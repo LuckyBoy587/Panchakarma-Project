@@ -32,7 +32,7 @@ const Appointments = () => {
       const s = val.trim();
       if (!s) return [];
       if (s.startsWith('[') || s.startsWith('{')) {
-        try { const parsed = JSON.parse(s); return Array.isArray(parsed) ? parsed : [parsed]; } catch(e) {}
+        try { const parsed = JSON.parse(s); return Array.isArray(parsed) ? parsed : [parsed]; } catch (e) { }
       }
       return s.split(',').map(x => x.trim()).filter(x => x.length > 0);
     }
@@ -41,7 +41,7 @@ const Appointments = () => {
 
   const fetchUserAppointments = async () => {
     try {
-  const response = await api.get('/api/appointments');
+      const response = await api.get('/api/appointments');
       console.log('Appointments response:', response.data);
       setUserAppointments(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
@@ -56,7 +56,7 @@ const Appointments = () => {
     setLoading(true);
     try {
       console.log('Fetching available slots for:', selectedDate, selectedTime);
-  const response = await api.post(`/api/slots/available`, { date: selectedDate, time: selectedTime });
+      const response = await api.post(`/api/slots/available`, { date: selectedDate, time: selectedTime });
       setAvailableSlots(response.data);
     } catch (error) {
       console.error('Error fetching slots:', error);
@@ -76,8 +76,8 @@ const Appointments = () => {
     setBookingSlot(practitioner.practitioner_id);
     try {
       // First, get patient ID
-  const patientResponse = await api.get('/api/patients');
-  const patient = patientResponse.data.find(p => p.patient_id === user.userId);
+      const patientResponse = await api.get('/api/patients');
+      const patient = patientResponse.data.find(p => p.patient_id === user.userId);
 
       if (!patient) {
         toast.error('Patient profile not found. Please complete your profile first.');
@@ -99,7 +99,7 @@ const Appointments = () => {
         preparationNotes: ''
       };
 
-  const response = await api.post('/api/appointments', appointmentData);
+      const response = await api.post('/api/appointments', appointmentData);
 
       toast.success('Appointment booked successfully!');
       setAvailableSlots(prev => prev.filter(p => p.practitioner_id !== practitioner.practitioner_id));
@@ -134,11 +134,11 @@ const Appointments = () => {
   return (
     <div className="space-y-8">
       <div>
-<h1 className="text-2xl sm:text-3xl font-bold text-app">Appointments</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-app">Appointments</h1>
         <p className="text-muted mt-2">Book appointments with practitioners and manage your schedule</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Book New Appointment */}
         <div className="surface rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center">
@@ -149,27 +149,23 @@ const Appointments = () => {
           <div className="space-y-4">
             {/* Date Selection */}
             <div>
-              <label className="block text-sm font-medium text-muted mb-2">
-                Select Date
-              </label>
+              <label className="label">Select Date</label>
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent text-app"
+                className="input-field text-app bg-app"
               />
             </div>
 
             {/* Time Selection */}
             <div>
-              <label className="block text-sm font-medium text-muted mb-2">
-                Select Time
-              </label>
+              <label className="label">Select Time</label>
               <select
                 value={selectedTime}
                 onChange={(e) => setSelectedTime(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent text-app"
+                className="input-field text-app bg-app"
               >
                 <option value="">Choose a time...</option>
                 {timeSlots.map((time) => (
@@ -204,10 +200,10 @@ const Appointments = () => {
                               Dr. {practitioner.first_name} {practitioner.last_name}
                             </p>
                             <p className="text-sm text-green-600">
-                                {(() => {
-                                  const specs = safeParseArray(practitioner.specializations);
-                                  return specs && specs.length > 0 ? specs.join(', ') : 'General Practitioner';
-                                })()}
+                              {(() => {
+                                const specs = safeParseArray(practitioner.specializations);
+                                return specs && specs.length > 0 ? specs.join(', ') : 'General Practitioner';
+                              })()}
                             </p>
                           </div>
                           <div className="text-right">
@@ -235,25 +231,25 @@ const Appointments = () => {
           </h2>
 
           {userAppointments.length > 0 ? (
-<div className="space-y-3">
-                {userAppointments.map((appointment) => (
-                  <div key={appointment.appointment_id} className="border border-gray-200 rounded-lg p-4">
+            <div className="space-y-3">
+              {userAppointments.map((appointment) => (
+                <div key={appointment.appointment_id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
                     <div>
-                        <p className="font-medium text-app">
-                          Dr. {appointment.provider_first_name} {appointment.provider_last_name}
-                        </p>
-                        <p className="text-sm text-muted">
-                          {new Date(appointment.appointment_date).toLocaleDateString()} at {formatTime(appointment.start_time)}
-                        </p>
+                      <p className="font-medium text-app">
+                        Dr. {appointment.provider_first_name} {appointment.provider_last_name}
+                      </p>
+                      <p className="text-sm text-muted">
+                        {new Date(appointment.appointment_date).toLocaleDateString()} at {formatTime(appointment.start_time)}
+                      </p>
                     </div>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}>
                       {appointment.status}
                     </span>
                   </div>
-                    <p className="text-sm text-muted">
-                      Service: {appointment.service_type}
-                    </p>
+                  <p className="text-sm text-muted">
+                    Service: {appointment.service_type}
+                  </p>
                 </div>
               ))}
             </div>

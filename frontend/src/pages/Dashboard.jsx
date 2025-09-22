@@ -285,78 +285,47 @@ const Dashboard = () => {
             ) : (
               <div className="space-y-4">
                 {treatmentSessions.map((session) => (
-                  <div key={session.session_id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold text-lg">{session.treatment_name}</h3>
-                        <p className="text-sm text-gray-600">Session #{session.session_number}</p>
-                      </div>
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(session.status)}`}>
-                        {session.status}
-                      </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        <span>{new Date(session.session_date).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}</span>
-                      </div>
-                      
-                      {session.start_time && session.end_time && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Clock className="h-4 w-4 mr-2" />
-                          <span>{session.start_time} - {session.end_time}</span>
+                  <div key={session.session_id} className="flex flex-col md:flex-row md:items-center justify-between border border-gray-200 rounded-lg p-4 hover:shadow transition-shadow bg-white">
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-lg">{session.treatment_name}</h3>
+                          <p className="text-sm text-gray-600">Session #{session.session_number}</p>
                         </div>
-                      )}
-                      
-                      <div className="flex items-center text-sm text-gray-600">
-                        <User className="h-4 w-4 mr-2" />
-                        <span>Therapist: {session.therapist_first_name} {session.therapist_last_name}</span>
+                        <div className="hidden md:flex md:flex-col md:items-end md:ml-4">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(session.status)}`}>{session.status}</span>
+                          {session.start_time && session.end_time && (
+                            <span className="text-xs text-gray-500 mt-2">{session.start_time} - {session.end_time}</span>
+                          )}
+                        </div>
                       </div>
-                      
-                      {session.practitioner_first_name && (
-                        <div className="flex items-center text-sm text-gray-600">
+
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          <span>{new Date(session.session_date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                        </div>
+                        <div className="flex items-center">
                           <User className="h-4 w-4 mr-2" />
-                          <span>Practitioner: {session.practitioner_first_name} {session.practitioner_last_name}</span>
+                          <span>Therapist: {session.therapist_first_name} {session.therapist_last_name}</span>
                         </div>
+                        {session.practitioner_first_name && (
+                          <div className="flex items-center">
+                            <User className="h-4 w-4 mr-2" />
+                            <span>Practitioner: {session.practitioner_first_name} {session.practitioner_last_name}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-3 md:mt-0 md:ml-4 flex-shrink-0 md:w-48 flex flex-col items-start md:items-end">
+                      <div className="md:hidden mb-2">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(session.status)}`}>{session.status}</span>
+                      </div>
+                      {session.start_time && session.end_time && (
+                        <div className="text-sm text-gray-500">{session.start_time} - {session.end_time}</div>
                       )}
                     </div>
-                    
-                    {session.procedures_performed && (
-                      <div className="mt-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Procedures:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {(() => {
-                            try {
-                              const procedures = JSON.parse(session.procedures_performed);
-                              return procedures.map((procedure, index) => (
-                                <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                                  {procedure}
-                                </span>
-                              ));
-                            } catch (e) {
-                              return (
-                                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                                  {session.procedures_performed}
-                                </span>
-                              );
-                            }
-                          })()}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {session.patient_response && (
-                      <div className="mt-4">
-                        <p className="text-sm font-medium text-gray-700">Patient Response:</p>
-                        <p className="text-sm text-gray-600 mt-1">{session.patient_response}</p>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>

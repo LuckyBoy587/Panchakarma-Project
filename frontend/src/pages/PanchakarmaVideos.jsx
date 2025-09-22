@@ -145,25 +145,25 @@ const PanchakarmaRepo = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-app p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6 text-center">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 mb-1">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-app mb-1">
             Panchakarma Educational Repository
           </h1>
-          <p className="text-sm md:text-lg text-gray-600">
+          <p className="text-sm md:text-lg text-muted">
             Explore the five main Panchakarma therapies and their detailed procedures
           </p>
         </div>
 
         {/* Main Content Container */}
-        <div className="bg-white rounded-xl shadow p-4 md:p-6">
+        <div className="surface rounded-xl shadow p-4 md:p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Left Sidebar - Therapy List with Subdivisions */}
             <aside className="md:col-span-1">
-              <div className="bg-gray-50 border border-gray-100 rounded-lg p-4 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-800 mb-3">Panchakarma Therapies</h2>
+              <div className="surface border border-transparent rounded-lg p-4 shadow-sm">
+                <h2 className="text-lg font-semibold text-app mb-3">Panchakarma Therapies</h2>
                 <div className="space-y-3">
                   {therapiesData.map((therapy, therapyIndex) => (
                     <div key={therapyIndex}>
@@ -171,12 +171,12 @@ const PanchakarmaRepo = () => {
                         onClick={() => handleTherapySelect(therapyIndex)}
                         className={`w-full text-left p-3 rounded-lg transition-all duration-150 flex flex-col ${
                           selectedTherapy === therapyIndex
-                            ? 'bg-blue-600 text-white shadow'
-                            : 'bg-white text-gray-700 hover:bg-gray-50'
+                            ? 'sidebar-item-selected'
+                            : 'sidebar-item'
                         }`}
                       >
                         <div className="font-medium">{therapy.name}</div>
-                        <div className={`text-sm mt-1 ${selectedTherapy === therapyIndex ? 'text-blue-100' : 'text-gray-500'}`}>
+                        <div className={`text-sm mt-1 ${selectedTherapy === therapyIndex ? 'text-blue-100' : 'text-muted'}`}>
                           {therapy.description.substring(0, 80)}{therapy.description.length > 80 ? '...' : ''}
                         </div>
                       </button>
@@ -189,8 +189,8 @@ const PanchakarmaRepo = () => {
                               onClick={() => handleSubdivisionSelect(subdivisionIndex)}
                               className={`w-full text-left p-2 rounded-md text-sm transition-all duration-150 ${
                                 selectedSubdivision === subdivisionIndex
-                                  ? 'bg-blue-500 text-white'
-                                  : 'bg-blue-50 text-blue-800 hover:bg-blue-100'
+                                  ? 'sidebar-subitem-selected'
+                                  : 'sidebar-subitem'
                               }`}
                             >
                               {subdivision.title}
@@ -208,15 +208,15 @@ const PanchakarmaRepo = () => {
             <main className="md:col-span-2">
               {currentTherapy && currentSubdivision && (
                 <div className="space-y-6">
-                  <div className="text-sm text-gray-500">
-                    <span className="font-medium text-gray-700">{currentTherapy.name}</span>
+                  <div className="text-sm text-muted">
+                    <span className="font-medium text-app">{currentTherapy.name}</span>
                     <span className="mx-2">→</span>
-                    <span className="text-gray-600">{currentSubdivision.title}</span>
+                    <span className="text-muted">{currentSubdivision.title}</span>
                   </div>
 
                   <div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">{currentSubdivision.title}</h2>
-                    <p className="text-md md:text-lg text-gray-600 leading-relaxed">{currentTherapy.description}</p>
+                    <h2 className="text-2xl md:text-3xl font-bold text-app mb-2">{currentSubdivision.title}</h2>
+                    <p className="text-md md:text-lg text-muted leading-relaxed">{currentTherapy.description}</p>
                   </div>
 
                   {/* Responsive video container */}
@@ -234,9 +234,9 @@ const PanchakarmaRepo = () => {
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Procedure Details</h3>
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                      <p className="text-gray-700 leading-relaxed">{currentSubdivision.transcript}</p>
+                    <h3 className="text-lg font-semibold text-app mb-2">Procedure Details</h3>
+                    <div className="surface rounded-lg p-4 border border-transparent">
+                      <p className="text-muted leading-relaxed">{currentSubdivision.transcript}</p>
                     </div>
                   </div>
                 </div>
@@ -245,7 +245,7 @@ const PanchakarmaRepo = () => {
           </div>
         </div>
 
-        <div className="mt-6 text-center text-gray-500 text-sm">
+        <div className="mt-6 text-center text-muted text-sm">
           Educational content for learning about traditional Panchakarma therapies and procedures
         </div>
       </div>
