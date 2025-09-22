@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import api from '../api';
 import { Calendar, Clock, User, Activity, CheckCircle, XCircle, AlertCircle, Clock as PendingIcon } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -37,7 +38,7 @@ const TreatmentPlans = () => {
   const fetchPatientTreatmentSessions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/treatment-plans/sessions/patient');
+  const response = await api.get('/api/treatment-plans/sessions/patient');
       setTreatmentSessions(response.data);
     } catch (error) {
       console.error('Error fetching treatment sessions:', error);
@@ -50,7 +51,7 @@ const TreatmentPlans = () => {
   const fetchStaffTreatmentSessions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/treatment-plans/sessions/staff');
+  const response = await api.get('/api/treatment-plans/sessions/staff');
       setTreatmentSessions(response.data);
     } catch (error) {
       console.error('Error fetching staff treatment sessions:', error);
@@ -63,7 +64,7 @@ const TreatmentPlans = () => {
   const fetchPatients = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/appointments');
+  const response = await api.get('/api/appointments');
       // Get unique patients from appointments
       const uniquePatients = response.data.reduce((acc, appointment) => {
         const patientKey = appointment.patient_id;
@@ -91,7 +92,7 @@ const TreatmentPlans = () => {
 
   const fetchTherapies = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/therapies');
+  const response = await api.get('/api/therapies');
       setTherapies(response.data);
     } catch (error) {
       console.error('Error fetching therapies:', error);
@@ -100,7 +101,7 @@ const TreatmentPlans = () => {
 
   const fetchTreatmentPlans = async () => {
     try {
-      const response = await axios.get('/api/treatment-plans');
+  const response = await api.get('/api/treatment-plans');
       setTreatmentPlans(response.data);
     } catch (error) {
       console.error('Error fetching treatment plans:', error);
@@ -181,7 +182,7 @@ const TreatmentPlans = () => {
       patientId: selectedPatient.patient_id,
       ...formData
     });
-    axios.post('/api/scheduler/', {...formData, patientId: selectedPatient.patient_id })
+    api.post('/api/scheduler/', {...formData, patientId: selectedPatient.patient_id })
       .then((response) => {
         toast.success(`Treatment plan created successfully! ${response.data.treatmentSessions?.length || 0} sessions scheduled in 30-minute slots.`);
         setShowModal(false);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import api from '../api';
 import { toast } from 'react-toastify';
 import PatientViewModal from '../components/PatientViewModal';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
@@ -172,7 +173,7 @@ const PractitionerProfile = () => {
 
   const fetchBusySlots = async (pracId) => {
     try {
-      const response = await axios.post(`/api/slots/busy/${pracId}`);
+  const response = await api.post(`/api/slots/busy/${pracId}`);
       const busySlotsData = response.data;
 
       // Convert busy slots to calendar events
@@ -210,7 +211,7 @@ const PractitionerProfile = () => {
 
     try {
       if (patientId) {
-        const res = await axios.get(`/api/patients/${patientId}`);
+  const res = await api.get(`/api/patients/${patientId}`);
         setModalPatient(res.data);
       } else {
         const mapped = {
@@ -235,7 +236,7 @@ const PractitionerProfile = () => {
   const fetchProfile = async () => {
     try {
       // Fetch profile data
-      const profileResponse = await axios.get('/api/practitioners/profile');
+  const profileResponse = await api.get('/api/practitioners/profile');
       const profile = profileResponse.data;
       console.log('Fetched profile:', profile);
       console.log('Working hours data:', profile.working_hours);
@@ -278,7 +279,7 @@ const PractitionerProfile = () => {
       }
 
       // Fetch appointments
-      const appointmentsResponse = await axios.get('/api/appointments');
+  const appointmentsResponse = await api.get('/api/appointments');
       const appointmentsData = appointmentsResponse.data;
       // Convert appointments to calendar events format
       const calendarEvents = appointmentsData.map(appointment => {
@@ -517,7 +518,7 @@ const PractitionerProfile = () => {
 
   const handleSave = async () => {
     try {
-      await axios.put('/api/practitioners/profile', {
+      await api.put('/api/practitioners/profile', {
         workingHours: workingDays
       });
       toast.success('Working days saved successfully!');

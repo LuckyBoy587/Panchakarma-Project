@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
+import api from '../api';
 import { toast } from 'react-toastify';
 
 const AuthContext = createContext();
@@ -31,6 +32,7 @@ export const AuthProvider = ({ children }) => {
       setUser(JSON.parse(userData));
       if (storedUserType) setUserType(storedUserType);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
 
     setLoading(false);
@@ -44,7 +46,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('/api/auth/login', { email, password });
+      const response = await api.post('/api/auth/login', { email, password });
       const { token, user: userData } = response.data;
 
       localStorage.setItem('token', token);
@@ -57,6 +59,7 @@ export const AuthProvider = ({ children }) => {
       }
       localStorage.setItem('user', JSON.stringify(userData));
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       setUser(userData);
       toast.success('Login successful!');
@@ -85,6 +88,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     localStorage.removeItem('userType');
     delete axios.defaults.headers.common['Authorization'];
+    delete api.defaults.headers.common['Authorization'];
     setUser(null);
     setUserType(null);
     toast.info('Logged out successfully');

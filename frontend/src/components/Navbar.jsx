@@ -145,16 +145,6 @@ const Navbar = () => {
               </Link>
             )}
 
-            {userType === 'staff' && (
-              <Link
-                to="/staff-dashboard"
-                className="flex items-center space-x-1 text-muted hover:text-app"
-              >
-                <Settings size={18} />
-                <span>Staff Dashboard</span>
-              </Link>
-            )}
-
             <button
               onClick={handleLogout}
               className="flex items-center space-x-1 text-muted hover:text-danger"

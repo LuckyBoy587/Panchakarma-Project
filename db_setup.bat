@@ -1,4 +1,5 @@
 @echo off
+del "backend\scheduled-jobs.json"
 echo Setting up MySQL Database for Panchakarma...
 
 echo.
@@ -21,4 +22,3 @@ mysql -u %db_user% -p%db_pass% panchakarma_db < "database\schema.sql"
 echo.
 echo Database setup complete!
 echo.
-pause

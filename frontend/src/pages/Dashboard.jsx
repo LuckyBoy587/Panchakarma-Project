@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
 import axios from 'axios';
+import api from '../api';
 import { Calendar, Users, FileText, TrendingUp, Clock, User } from 'lucide-react';
 
 const Dashboard = () => {
@@ -32,14 +33,14 @@ const Dashboard = () => {
       setLoading(true);
 
       // Fetch appointments
-      const appointmentsResponse = await axios.get('/api/appointments');
+  const appointmentsResponse = await api.get('/api/appointments');
       const appointments = appointmentsResponse.data;
 
       // Fetch treatment plans (only for non-therapist users)
       let treatmentPlans = [];
       if (userType !== 'therapist') {
         try {
-          const treatmentPlansResponse = await axios.get('/api/treatment-plans');
+          const treatmentPlansResponse = await api.get('/api/treatment-plans');
           treatmentPlans = treatmentPlansResponse.data;
         } catch (error) {
           console.error('Error fetching treatment plans:', error);
@@ -50,7 +51,7 @@ const Dashboard = () => {
       // Fetch treatment sessions for patients
       if (userType === 'patient') {
         try {
-          const sessionsResponse = await axios.get('/api/treatment-plans/sessions/patient');
+          const sessionsResponse = await api.get('/api/treatment-plans/sessions/patient');
           setTreatmentSessions(sessionsResponse.data);
         } catch (error) {
           console.error('Error fetching treatment sessions:', error);
@@ -85,8 +86,8 @@ const Dashboard = () => {
         });
       } else if (userType === 'admin') {
         // For admin, fetch all data
-        const patientsResponse = await axios.get('/api/patients');
-        const practitionersResponse = await axios.get('/api/practitioners');
+  const patientsResponse = await api.get('/api/patients');
+  const practitionersResponse = await api.get('/api/practitioners');
 
         setStats({
           appointments: appointments.length,

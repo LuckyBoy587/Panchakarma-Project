@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import api from '../api';
 import { toast } from 'react-toastify';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
@@ -42,7 +43,7 @@ const TherapistProfile = () => {
     fetchProfile();
     const fetchLeaveDays = async () => {
       try {
-        const response = await axios.get("/api/therapists/leave-days");
+        const response = await api.get("/api/therapists/leave-days");
         setLeaveDays(response.data.leaveDays);
       } catch (error) {
         console.error("Error fetching leave days:", error);
@@ -70,7 +71,7 @@ const TherapistProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await axios.get('/api/therapists/profile');
+  const response = await api.get('/api/therapists/profile');
       const profile = response.data;
 
       if (profile.working_hours) {
@@ -88,7 +89,7 @@ const TherapistProfile = () => {
       }
 
       // Fetch treatment sessions for this therapist
-      const sessionsResponse = await axios.get(`/api/appointments`);
+  const sessionsResponse = await api.get(`/api/appointments`);
       const sessionsData = sessionsResponse.data;
       console.log('Fetched treatment sessions:', sessionsData);
       console.log('First session structure:', sessionsData[0]); // Debug log
@@ -132,9 +133,9 @@ const TherapistProfile = () => {
     }
   };
 
-  const fetchBusySlots = async (id) => {
+    const fetchBusySlots = async (id) => {
     try {
-      const response = await axios.get(`/api/slots/busy/${id}`);
+      const response = await api.get(`/api/slots/busy/${id}`);
       setBusySlots(response.data);
     } catch (error) {
       console.error('Error fetching busy slots:', error);
@@ -346,7 +347,7 @@ const TherapistProfile = () => {
 
   const handleSave = async () => {
     try {
-      await axios.put('/api/therapists/profile', {
+      await api.put('/api/therapists/profile', {
         workingHours: workingDays
       });
       toast.success('Working days saved successfully!');

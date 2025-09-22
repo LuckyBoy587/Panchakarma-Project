@@ -1,58 +1,30 @@
 [
   {
-    "id": "1758377073483-vah8j7s",
-    "to": "kowshi587@gmail.com",
-    "subject": "Reminder: Session on 2025-09-23",
-    "text": "Hello Arjun Sharma,\n\nThis is a reminder for your upcoming session (Abhyanga (Oil Massage)) on 2025-09-23 at 08:00:00 with Priya Patel.\n\nIf you need to reschedule, please contact the clinic.\n\nBest regards,\nPanchakarma Clinic",
-    "sendAt": "2025-09-22T02:30:00.000Z"
-  },
-  {
-    "id": "1758377073486-eq16lz2",
-    "to": "727723euit108@skcet.ac.in",
-    "subject": "Reminder: Session on 2025-09-23",
-    "text": "Hello Dr. Meera Nair,\n\nThis is a reminder of your upcoming session with patient ID pat-001 for Abhyanga (Oil Massage) on 2025-09-23 at 08:00:00.\n\nBest regards,\nPanchakarma Clinic",
-    "sendAt": "2025-09-22T02:30:00.000Z"
-  },
-  {
-    "id": "1758377073488-pfwflme",
+    "id": "1758549184832-f1xguvv",
     "to": "kowshi587@gmail.com",
     "subject": "Reminder: Session on 2025-09-24",
-    "text": "Hello Arjun Sharma,\n\nThis is a reminder for your upcoming session (Abhyanga (Oil Massage)) on 2025-09-24 at 08:00:00 with Priya Patel.\n\nIf you need to reschedule, please contact the clinic.\n\nBest regards,\nPanchakarma Clinic",
+    "text": "Hello Arjun Sharma,\n\nThis is a reminder for your upcoming session (Basti (Enema Therapy)) on 2025-09-24 at 08:00:00 with Priya Patel.\n\nIf you need to reschedule, please contact the clinic.\n\nBest regards,\nPanchakarma Clinic",
     "sendAt": "2025-09-23T02:30:00.000Z"
   },
   {
-    "id": "1758377073488-lrpntw9",
+    "id": "1758549184837-79vd6lc",
     "to": "727723euit108@skcet.ac.in",
     "subject": "Reminder: Session on 2025-09-24",
-    "text": "Hello Dr. Meera Nair,\n\nThis is a reminder of your upcoming session with patient ID pat-001 for Abhyanga (Oil Massage) on 2025-09-24 at 08:00:00.\n\nBest regards,\nPanchakarma Clinic",
+    "text": "Hello Dr. Meera Nair,\n\nThis is a reminder of your upcoming session with patient ID pat-001 for Basti (Enema Therapy) on 2025-09-24 at 08:00:00.\n\nBest regards,\nPanchakarma Clinic",
     "sendAt": "2025-09-23T02:30:00.000Z"
   },
   {
-    "id": "1758377443075-cnogt1a",
+    "id": "1758549184838-3am81r3",
     "to": "kowshi587@gmail.com",
-    "subject": "Reminder: Session on 2025-09-23",
-    "text": "Hello Arjun Sharma,\n\nThis is a reminder for your upcoming session (Basti (Enema Therapy)) on 2025-09-23 at 08:00:00 with Priya Patel.\n\nIf you need to reschedule, please contact the clinic.\n\nBest regards,\nPanchakarma Clinic",
-    "sendAt": "2025-09-22T02:30:00.000Z"
+    "subject": "Reminder: Session on 2025-09-25",
+    "text": "Hello Arjun Sharma,\n\nThis is a reminder for your upcoming session (Basti (Enema Therapy)) on 2025-09-25 at 08:00:00 with Priya Patel.\n\nIf you need to reschedule, please contact the clinic.\n\nBest regards,\nPanchakarma Clinic",
+    "sendAt": "2025-09-24T02:30:00.000Z"
   },
   {
-    "id": "1758377443077-71lwgra",
+    "id": "1758549184839-w3xjepe",
     "to": "727723euit108@skcet.ac.in",
-    "subject": "Reminder: Session on 2025-09-23",
-    "text": "Hello Dr. Meera Nair,\n\nThis is a reminder of your upcoming session with patient ID pat-001 for Basti (Enema Therapy) on 2025-09-23 at 08:00:00.\n\nBest regards,\nPanchakarma Clinic",
-    "sendAt": "2025-09-22T02:30:00.000Z"
-  },
-  {
-    "id": "1758377443078-paofqj2",
-    "to": "kowshi587@gmail.com",
-    "subject": "Reminder: Session on 2025-09-30",
-    "text": "Hello Arjun Sharma,\n\nThis is a reminder for your upcoming session (Basti (Enema Therapy)) on 2025-09-30 at 08:00:00 with Priya Patel.\n\nIf you need to reschedule, please contact the clinic.\n\nBest regards,\nPanchakarma Clinic",
-    "sendAt": "2025-09-29T02:30:00.000Z"
-  },
-  {
-    "id": "1758377443080-9v8l0nm",
-    "to": "727723euit108@skcet.ac.in",
-    "subject": "Reminder: Session on 2025-09-30",
-    "text": "Hello Dr. Meera Nair,\n\nThis is a reminder of your upcoming session with patient ID pat-001 for Basti (Enema Therapy) on 2025-09-30 at 08:00:00.\n\nBest regards,\nPanchakarma Clinic",
-    "sendAt": "2025-09-29T02:30:00.000Z"
+    "subject": "Reminder: Session on 2025-09-25",
+    "text": "Hello Dr. Meera Nair,\n\nThis is a reminder of your upcoming session with patient ID pat-001 for Basti (Enema Therapy) on 2025-09-25 at 08:00:00.\n\nBest regards,\nPanchakarma Clinic",
+    "sendAt": "2025-09-24T02:30:00.000Z"
   }
 ]

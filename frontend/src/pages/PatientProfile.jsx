@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
@@ -47,7 +48,7 @@ const PatientProfile = () => {
 
   const fetchPatientProfile = async () => {
     try {
-      const response = await axios.get('/api/patients');
+  const response = await api.get('/api/patients');
       if (response.data.length > 0) {
         const patient = response.data[0];
         setPatientData(patient);
@@ -121,7 +122,7 @@ const PatientProfile = () => {
         }
 
         try {
-          await axios.post('/api/user-preferences', { notify_before: prefValue });
+          await api.post('/api/user-preferences', { notify_before: prefValue });
           toast.success('Preferences saved');
         } catch (prefErr) {
           console.error('Error saving preferences:', prefErr);
@@ -168,9 +169,9 @@ const PatientProfile = () => {
 
       let response;
       if (patientId) {
-        response = await axios.put(url, payload);
+        response = await api.put(url, payload);
       } else {
-        response = await axios.post('/api/patients', payload);
+        response = await api.post('/api/patients', payload);
       }
 
       // if backend returns the saved patient, update local state

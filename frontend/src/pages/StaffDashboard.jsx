@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import api from '../api';
 import { Package, Home, Plus, Edit2, CheckCircle, XCircle, Wrench } from 'lucide-react';
 
 const StaffDashboard = () => {
@@ -44,8 +45,8 @@ const StaffDashboard = () => {
 
   const loadAvailableItems = async () => {
     try {
-      const response = await axios.get('/api/staff/stock-items');
-      setAvailableItems(response.data);
+  const response = await api.get('/api/staff/stock-items');
+  setAvailableItems(response.data);
     } catch (error) {
       console.error('Error loading available items:', error);
     }
@@ -55,8 +56,8 @@ const StaffDashboard = () => {
     try {
       setLoading(true);
       const [stockResponse, roomsResponse] = await Promise.all([
-        axios.get('/api/staff/stock'),
-        axios.get('/api/staff/rooms')
+        api.get('/api/staff/stock'),
+        api.get('/api/staff/rooms')
       ]);
       setStock(stockResponse.data);
       setRooms(roomsResponse.data);
@@ -112,7 +113,7 @@ const StaffDashboard = () => {
       }
       
       try {
-        await axios.delete(`/api/staff/stock/${editingStock.id}`);
+  await api.delete(`/api/staff/stock/${editingStock.id}`);
         setShowStockModal(false);
         setEditingStock(null);
         setStockForm({ itemId: '', itemName: '', quantity: '', unit: '' });
@@ -135,13 +136,13 @@ const StaffDashboard = () => {
     
     try {
       if (editingStock) {
-        await axios.put(`/api/staff/stock/${editingStock.id}`, {
+        await api.put(`/api/staff/stock/${editingStock.id}`, {
           itemName: stockForm.itemName,
           quantity: parseInt(stockForm.quantity),
           unit: stockForm.unit
         });
       } else {
-        await axios.post('/api/staff/stock', {
+        await api.post('/api/staff/stock', {
           itemName: stockForm.itemName,
           quantity: parseInt(stockForm.quantity),
           unit: stockForm.unit
@@ -198,7 +199,7 @@ const StaffDashboard = () => {
 
   const handleRoomStatusUpdate = async (roomId, newStatus) => {
     try {
-      await axios.put(`/api/staff/rooms/${roomId}`, { status: newStatus });
+  await api.put(`/api/staff/rooms/${roomId}`, { status: newStatus });
       fetchData();
     } catch (error) {
       console.error('Error updating room status:', error);

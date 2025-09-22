@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import api from '../api';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import { FaCalendarAlt, FaClock, FaUserMd, FaCheck } from 'react-icons/fa';
@@ -40,7 +41,7 @@ const Appointments = () => {
 
   const fetchUserAppointments = async () => {
     try {
-      const response = await axios.get('/api/appointments');
+  const response = await api.get('/api/appointments');
       console.log('Appointments response:', response.data);
       setUserAppointments(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
@@ -55,7 +56,7 @@ const Appointments = () => {
     setLoading(true);
     try {
       console.log('Fetching available slots for:', selectedDate, selectedTime);
-      const response = await axios.post(`/api/slots/available`, { date: selectedDate, time: selectedTime });
+  const response = await api.post(`/api/slots/available`, { date: selectedDate, time: selectedTime });
       setAvailableSlots(response.data);
     } catch (error) {
       console.error('Error fetching slots:', error);
@@ -75,7 +76,7 @@ const Appointments = () => {
     setBookingSlot(practitioner.practitioner_id);
     try {
       // First, get patient ID
-      const patientResponse = await axios.get('/api/patients');
+  const patientResponse = await api.get('/api/patients');
   const patient = patientResponse.data.find(p => p.patient_id === user.userId);
 
       if (!patient) {
@@ -98,7 +99,7 @@ const Appointments = () => {
         preparationNotes: ''
       };
 
-      const response = await axios.post('/api/appointments', appointmentData);
+  const response = await api.post('/api/appointments', appointmentData);
 
       toast.success('Appointment booked successfully!');
       setAvailableSlots(prev => prev.filter(p => p.practitioner_id !== practitioner.practitioner_id));
